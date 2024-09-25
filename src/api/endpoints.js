@@ -1,0 +1,18 @@
+export const endpoints = {
+  RegisterNewIndividual: "/registernewindividual",
+  Login: "/login",
+  Login2Fa: "/login2fa",
+  ActivateAccount: "/activateaccount",
+  ResendActivationCode: "/resendactivationcode",
+  ChangePassword: "/changepassword",
+  ResetPasswordRequest: "/resetpasswordrequest",
+  ResetPassword: "/resetpassword",
+  getCurrencies: "/getcountries",
+  getProducts: "/getclientinvestibleproducts",
+  getWalletBalance: "/getclientwalletbalances",
+  getVirtualAccounts: "/getvirtualaccounts",
+  getPortfolio: "/getclientportfolios",
+  getTransactions: "/gettransactions",
+  getMutualFundOnlineBalances: "/getclientmutualfundonlinebalances",
+  mutualFundNoAccount: "mutualfundsubscriptionnoaccount",
+};

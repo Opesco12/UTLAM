@@ -13,16 +13,19 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to let you choose profile pictures and share images.",
+        "NSCameraUsageDescription": "This app needs access to your camera to let you take photos for your profile and to share.",
+        "NSMicrophoneUsageDescription": "This app needs access to your microphone to let you record videos with sound."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "permissions": [
-        "android.permission.RECORD_AUDIO"
-      ]
+      "permissions": ["android.permission.RECORD_AUDIO"]
     },
     "web": {
       "bundler": "metro",
@@ -34,7 +37,14 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "The app accesses your photos to let you share them with your friends."
+          "photosPermission": "The app accesses your photos to let you share them with your friends.",
+          "cameraPermission": "The app accesses your camera to let you take photos to share with your friends."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow UTLAM to access your camera"
         }
       ]
     ],
@@ -49,6 +59,12 @@
         "projectId": "e5577935-d140-45b8-84d7-36e737a9d571"
       }
     },
-    "owner": "opesco"
+    "owner": "opesco",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/e5577935-d140-45b8-84d7-36e737a9d571"
+    }
   }
 }

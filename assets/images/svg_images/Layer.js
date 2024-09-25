@@ -1,9 +1,9 @@
-import * as React from "react"
+import * as React from "react";
 import { Path, Svg } from "react-native-svg";
 
-import { Colors } from "@/constants/Colors";
+import { Colors } from "@/src/constants/Colors";
 
-function Layer(props, {children}) {
+function Layer(props, { children }) {
   return (
     <Svg
       width={375}
@@ -21,7 +21,7 @@ function Layer(props, {children}) {
       />
       {children}
     </Svg>
-  )
+  );
 }
 
 export default Layer;
