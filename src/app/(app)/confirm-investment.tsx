@@ -14,11 +14,21 @@ import StyledText from "@/src/components/StyledText";
 import { router, useLocalSearchParams } from "expo-router";
 import { amountFormatter } from "@/src/helperFunctions/amountFormatter";
 
-import { mutualFundSubscription } from "@/src/api";
+import {
+  fixedIncomeSubscriptionOrder,
+  mutualFundSubscription,
+} from "@/src/api";
 
 const ConfirmInvestment = ({ route }) => {
-  const { amount, header, headerImageUrl, portfolioId, portfolioTypeName } =
-    useLocalSearchParams();
+  const {
+    amount,
+    header,
+    headerImageUrl,
+    portfolioId,
+    portfolioTypeName,
+    securityId,
+    tenor,
+  } = useLocalSearchParams();
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -28,7 +38,18 @@ const ConfirmInvestment = ({ route }) => {
         amount: amount,
         portfolioId: portfolioId,
       });
-      console.log(data);
+      setLoading(false);
+      return data;
+    } else {
+      const data = await fixedIncomeSubscriptionOrder({
+        faceValue: amount,
+        currency: "NGN",
+        portfolioId: portfolioId,
+        securityProductId: securityId,
+        tenor: tenor,
+      });
+      setLoading(false);
+      return data;
     }
   };
 
@@ -177,41 +198,52 @@ const ConfirmInvestment = ({ route }) => {
           <AppButton
             disabled={!agreeToTerms}
             customStyles={{ marginTop: 20 }}
-            onPress={() => {
+            onPress={async () => {
               setLoading(true);
               try {
-                makeInvestment({
+                const data = await makeInvestment({
                   amount: amount,
                   portfolioId: portfolioId,
                   portfolioTypeName: portfolioTypeName,
                 });
-                setTimeout(() => {
-                  showMessage({
-                    position: "center",
-                    message: "Investment Successful",
-                    description: `You have successfully invested ₦${
-                      amount && amount
-                    } in ${header && header}`,
-                    textStyle: { fontSize: 18, textAlign: "center" },
-                    titleStyle: {
-                      fontSize: 20,
-                      fontWeight: "600",
-                      textAlign: "center",
-                    },
-                    duration: 3000,
-                    renderCustomContent: () => (
-                      <LottieView
-                        autoPlay
-                        source={require("../../../assets/animations/success.json")}
-                        style={{ height: 200, width: 200, alignSelf: "center" }}
-                        loop={false}
-                      />
-                    ),
-                  });
-                  setLoading(false);
-                  router.replace("/(tabs)/");
-                }, 5000);
-              } catch (err) {}
+                if (data) {
+                  setTimeout(() => {
+                    showMessage({
+                      position: "center",
+                      message: "Investment Successful",
+                      description: `You have successfully invested ₦${
+                        amount && amount
+                      } in ${header && header}`,
+                      style: {
+                        padding: 15,
+                      },
+                      textStyle: { fontSize: 18, textAlign: "center" },
+                      titleStyle: {
+                        fontSize: 20,
+                        fontWeight: "600",
+                        textAlign: "center",
+                      },
+                      duration: 3000,
+                      renderCustomContent: () => (
+                        <LottieView
+                          autoPlay
+                          source={require("../../../assets/animations/success.json")}
+                          style={{
+                            height: 200,
+                            width: 200,
+                            alignSelf: "center",
+                          }}
+                          loop={false}
+                        />
+                      ),
+                    });
+                    setLoading(false);
+                    router.replace("/(tabs)/");
+                  }, 2000);
+                }
+              } catch (err) {
+                console.log(err);
+              }
             }}
           >
             {loading ? <ActivityIndicator size={"small"} /> : "Make Payment"}

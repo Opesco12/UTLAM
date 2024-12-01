@@ -1,6 +1,6 @@
-import { StyleSheet, Text, TextInput, View } from "react-native";
-import { useState, useRef } from "react";
-
+import React, { useRef } from "react";
+import { StyleSheet, View, TextInput, Alert } from "react-native";
+import * as Clipboard from "expo-clipboard";
 import { Colors } from "@/src/constants/Colors";
 
 const Otp_Input = ({
@@ -10,20 +10,57 @@ const Otp_Input = ({
   setCode,
   isIncorrect,
 }) => {
-  // const [code, setCode] = useState(Array(codeLength).fill(''));
   const inputRefs = useRef([]);
+
+  const handlePaste = async () => {
+    try {
+      const clipboardContent = await Clipboard.getStringAsync();
+      if (clipboardContent) {
+        const newCode = [...code];
+        const validPastedData = clipboardContent.slice(0, codeLength);
+
+        for (let i = 0; i < validPastedData.length; i++) {
+          if (/^\d$/.test(validPastedData[i])) {
+            newCode[i] = validPastedData[i];
+          }
+        }
+
+        setCode(newCode);
+
+        // Focus on the next empty input or the last input
+        const nextEmptyIndex = newCode.findIndex((digit) => digit === "");
+        const focusIndex =
+          nextEmptyIndex === -1 ? codeLength - 1 : nextEmptyIndex;
+        inputRefs.current[focusIndex].focus();
+
+        if (newCode.every((digit) => digit !== "")) {
+          onCodeFilled && onCodeFilled(newCode.join(""));
+        }
+      }
+    } catch (error) {
+      console.error("Failed to read clipboard:", error);
+    }
+  };
+
+  const handleLongPress = () => {
+    Alert.alert("Paste OTP", "Do you want to paste the OTP from clipboard?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      { text: "Paste", onPress: handlePaste },
+    ]);
+  };
 
   const handleChange = (text, index) => {
     const newCode = [...code];
     newCode[index] = text;
     setCode(newCode);
 
-    // Move to next input if current input is filled
     if (text && index < codeLength - 1) {
       inputRefs.current[index + 1].focus();
     }
 
-    // Call onCodeFilled when all inputs are filled
     if (newCode.every((digit) => digit !== "")) {
       onCodeFilled && onCodeFilled(newCode.join(""));
     }
@@ -35,7 +72,6 @@ const Otp_Input = ({
     }
   };
 
-  // console.log(code.join(""))
   return (
     <View style={styles.container}>
       {code.map((digit, index) => (
@@ -51,6 +87,7 @@ const Otp_Input = ({
           value={digit}
           onChangeText={(text) => handleChange(text, index)}
           onKeyPress={(event) => handleKeyPress(event, index)}
+          onLongPress={handleLongPress}
         />
       ))}
     </View>

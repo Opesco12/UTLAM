@@ -1,7 +1,6 @@
-import { StyleSheet, Text, View } from "react-native";
+import { View } from "react-native";
 import { useState } from "react";
 import { showMessage } from "react-native-flash-message";
-import axios from "axios";
 import { router, useLocalSearchParams } from "expo-router";
 
 import Screen from "@/src/components/Screen";
@@ -13,8 +12,9 @@ import StyledText from "@/src/components/StyledText";
 
 import { storeUserData } from "@/src/storage/userData";
 import { obfuscateEmail } from "../../helperFunctions/obfuscateEmail";
+import { activateAccount, login2fa, resnedActivationCode } from "@/src/api";
 
-const Otp = ({ route }) => {
+const Otp = ({}) => {
   const { username, header } = useLocalSearchParams();
   const [code, setCode] = useState(Array(6).fill(""));
   const [isIncorrect, setIsIncorrect] = useState(false);
@@ -63,33 +63,15 @@ const Otp = ({ route }) => {
                 marginTop: 10,
                 textAlign: "center",
               }}
-              onPress={() => {
-                axios
-                  .post(
-                    "https://utl-proxy.vercel.app/api/v1/resendactivationcode",
-                    { username: username, securityCode: `${code.join("")}` }
-                  )
-                  .then((res) => {
-                    if (res.status === 200) {
-                      showMessage({
-                        message: "Security code has been sent to your email",
-                        type: "success",
-                      });
-                    }
-                  })
-                  .catch((err) => {
-                    if (err.status === 400) {
-                      showMessage({
-                        message: "Incorrect Security Code",
-                        type: "danger",
-                      });
-                    } else {
-                      showMessage({
-                        message: "Please try again later",
-                        type: "warning",
-                      });
-                    }
+              onPress={async () => {
+                const data = { userName: username };
+                const response = await resnedActivationCode(data);
+                if (response) {
+                  showMessage({
+                    message: "Security code has been sent to your email",
+                    type: "success",
                   });
+                }
               }}
             >
               Resend Security Code
@@ -98,66 +80,41 @@ const Otp = ({ route }) => {
         )}
 
         <AppButton
-          onPress={() => {
+          onPress={async () => {
             if (header) {
-              axios
-                .post("https://utl-proxy.vercel.app/api/v1/activateaccount", {
-                  username: username,
-                  securityCode: `${code.join("")}`,
-                })
-                .then((res) => {
-                  if (res.status === 200) {
-                    showMessage({
-                      message: "Login Succesful",
-                      type: "success",
-                    });
-                    router.replace("/(tabs)/");
-                  }
-                })
-                .catch((err) => {
-                  if (err.status === 400) {
-                    setIsIncorrect(true);
-                    showMessage({
-                      message: "Incorrect Security Code",
-                      type: "danger",
-                    });
-                  } else {
-                    showMessage({
-                      message: "Please try again later",
-                      type: "warning",
-                    });
-                  }
+              const data = {
+                username: username,
+                securityCode: `${code.join("")}`,
+              };
+
+              const response = await activateAccount(data);
+              if (response) {
+                showMessage({
+                  message: "Login Succesful",
+                  type: "success",
                 });
+                router.replace("/login");
+              } else {
+                setIsIncorrect(true);
+              }
             } else {
-              axios
-                .post("https://utl-proxy.vercel.app/api/v1/login2fa", {
-                  username: username,
-                  securityCode: `${code.join("")}`,
-                })
-                .then((res) => {
-                  if (res.status === 200) {
-                    showMessage({
-                      message: "Login Succesful",
-                      type: "success",
-                    });
-                    console.log(res.data);
-                    storeUserData(res.data);
-                    router.replace("/(tabs)/");
-                  }
-                })
-                .catch((err) => {
-                  if (err.status === 400) {
-                    showMessage({
-                      message: "Incorrect Security Code",
-                      type: "danger",
-                    });
-                  } else {
-                    showMessage({
-                      message: "Please try again later",
-                      type: "warning",
-                    });
-                  }
+              const data = {
+                username: username,
+                securityCode: `${code.join("")}`,
+              };
+
+              const response = await login2fa(data);
+              if (response) {
+                showMessage({
+                  message: "Login Succesful",
+                  type: "success",
                 });
+                console.log(response);
+                storeUserData(response);
+                router.replace("/(tabs)/");
+              } else {
+                setIsIncorrect(true);
+              }
             }
           }}
           customStyles={{

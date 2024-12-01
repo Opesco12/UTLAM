@@ -20,12 +20,25 @@ import SavingDetails from "@/src/components/SavingDetails";
 
 import { amountFormatter } from "@/src/helperFunctions/amountFormatter";
 import Loader from "@/src/components/Loader";
-import { getWalletBalance, mutualFundSubscription } from "@/src/api";
+import {
+  getFixedIcomeOnlineBalances,
+  getLiabilityProducts,
+  getMutualFundOnlineBalance,
+  getTenor,
+  getWalletBalance,
+  mutualFundSubscription,
+} from "@/src/api";
 import { showMessage } from "react-native-flash-message";
+import AppPicker from "@/src/components/AppPicker";
 
 const ProductDetails = ({}) => {
   const [loading, setLoading] = useState(false);
   const [userBalance, setUserBalance] = useState(null);
+  const [isLiabilityProduct, setIsLiabilityProduct] = useState(false);
+  const [liabilityProducts, setLiabilityProducts] = useState([]);
+  const [productTenors, setProductTenors] = useState([]);
+  const [selectedTenor, setSelectedTenor] = useState(null);
+  const [investmentBalance, setInvestmentBalance] = useState(null);
 
   const {
     header,
@@ -46,10 +59,51 @@ const ProductDetails = ({}) => {
       setLoading(true);
       const userBalance = await getWalletBalance();
       setUserBalance(userBalance[0]);
+
+      if (product.portfolioType === 9) {
+        const investmentbalances = await getFixedIcomeOnlineBalances(
+          product.portfolioId
+        );
+        var balance = 0;
+        investmentbalances?.map((investment, index) => {
+          balance += investment.currentValue;
+        });
+        setInvestmentBalance(balance);
+      } else {
+        const investment = await getMutualFundOnlineBalance(
+          product.portfolioId
+        );
+        if (investment) setInvestmentBalance(investment.balance);
+      }
+
       setLoading(false);
     };
     fetchData();
   }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (product.portfolioType === 9) {
+        setIsLiabilityProduct(true);
+        const liabilityProducts = await getLiabilityProducts(
+          product.portfolioId
+        );
+        if (liabilityProducts) {
+          setLiabilityProducts(liabilityProducts);
+          const tenors = await getTenor(liabilityProducts[0].productId);
+          setProductTenors(tenors);
+        }
+      }
+    };
+    fetchData();
+  }, []);
+
+  const tenorOptions = productTenors?.map((tenor, index) => {
+    return {
+      label: `${tenor.tenor} Days`,
+      value: tenor.tenor,
+    };
+  });
 
   return (
     <LayeredScreen
@@ -94,7 +148,7 @@ const ProductDetails = ({}) => {
                   textAlign: "center",
                 }}
               >
-                {amountFormatter.format(product?.currentValue)}
+                {amountFormatter.format(investmentBalance)}
               </StyledText>
             </ContentBox>
 
@@ -180,7 +234,6 @@ const ProductDetails = ({}) => {
               onSubmit={(values, { setSubmitting }) => {
                 const { amount } = values;
                 setSubmitting(true);
-                console.log(userBalance.amount);
                 if (amount > userBalance.amount) {
                   showMessage({
                     message:
@@ -189,24 +242,70 @@ const ProductDetails = ({}) => {
                   });
                   setSubmitting(false);
                 } else {
-                  setTimeout(() => {
-                    setSubmitting(false);
-                    router.push({
-                      pathname: "/confirm-investment",
-                      params: {
-                        header: header,
-                        headerImageUrl: headerImageUrl && headerImageUrl,
-                        amount: Number(amount),
-                        portfolioId: product?.portfolioId,
-                        portfolioTypeName: product?.portfolioTypeName,
-                      },
+                  if (amount < product.minimumInvestment) {
+                    showMessage({
+                      message: `Minimum investment is ${amountFormatter.format(
+                        product.minimumInvestment
+                      )}`,
+                      type: "warning",
                     });
-                  }, 5000);
+                    setSubmitting(false);
+                  } else {
+                    if (isLiabilityProduct) {
+                      if (!selectedTenor) {
+                        showMessage({
+                          message: "Please select a product tenor",
+                          type: "warning",
+                        });
+                        setSubmitting(false);
+                      } else {
+                        setTimeout(() => {
+                          setSubmitting(false);
+                          router.push({
+                            pathname: "/confirm-investment",
+                            params: {
+                              header: header,
+                              headerImageUrl: headerImageUrl && headerImageUrl,
+                              amount: Number(amount),
+                              portfolioId: product?.portfolioId,
+                              portfolioTypeName: product?.portfolioTypeName,
+                              isLiabilityProduct: true,
+                              securityId:
+                                liabilityProducts[0].securityProductId,
+                              tenor: selectedTenor,
+                            },
+                          });
+                        }, 5000);
+                      }
+                    } else {
+                      setTimeout(() => {
+                        setSubmitting(false);
+                        router.push({
+                          pathname: "/confirm-investment",
+                          params: {
+                            header: header,
+                            headerImageUrl: headerImageUrl && headerImageUrl,
+                            amount: Number(amount),
+                            portfolioId: product?.portfolioId,
+                            portfolioTypeName: product?.portfolioTypeName,
+                          },
+                        });
+                      }, 5000);
+                    }
+                  }
                 }
               }}
             >
               {({ handleChange, handleSubmit, isSubmitting }) => (
                 <ContentBox customStyles={{ backgroundColor: Colors.white }}>
+                  <StyledText
+                    type="title"
+                    color={Colors.primary}
+                    variant="semibold"
+                    style={{ textAlign: "center" }}
+                  >
+                    Invest Funds
+                  </StyledText>
                   <AppTextField
                     label={"Amount to invest"}
                     name={"amount"}
@@ -223,6 +322,16 @@ const ProductDetails = ({}) => {
                     leftIconContainerStyle={{ marginLeft: 10 }}
                     keyboardType="numeric"
                   />
+
+                  {isLiabilityProduct && (
+                    <AppPicker
+                      label={"Tenor"}
+                      placeholder={"Select Tenor"}
+                      options={tenorOptions}
+                      value={selectedTenor}
+                      onValueChange={(value) => setSelectedTenor(value)}
+                    />
+                  )}
                   <AppButton
                     customStyles={{ marginTop: 20 }}
                     onPress={handleSubmit}

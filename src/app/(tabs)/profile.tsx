@@ -1,6 +1,6 @@
 import { Image, StyleSheet, View, KeyboardAvoidingView } from "react-native";
 import { useEffect, useState } from "react";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import {
   Book,
   ClipboardTick,
@@ -17,13 +17,24 @@ import { Colors } from "@/src/constants/Colors";
 import StyledText from "@/src/components/StyledText";
 import AppListItem from "@/src/components/AppListItem";
 import { retrieveUserData } from "@/src/storage/userData";
+import { logout } from "@/src/api";
+import { Pressable } from "react-native";
 
 const Profile = () => {
   const [fullname, setFullname] = useState(null);
+  const [authToken, setAuthToken] = useState(null);
+
+  const logoutUser = async () => {
+    const data = await logout(authToken);
+    console.log(data);
+    router.replace("/(auth)/login");
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       const userData = await retrieveUserData();
       setFullname(userData?.fullName);
+      setAuthToken(userData?.token);
     };
     fetchData();
   }, []);
@@ -156,19 +167,21 @@ const Profile = () => {
       </View>
 
       <View style={{ flex: 1, justifyContent: "flex-end", paddingBottom: 20 }}>
-        <View style={styles.signout}>
-          <LogoutCurve
-            size={20}
-            color={Colors.error}
-          />
-          <StyledText
-            color={Colors.error}
-            type="title"
-            variant="medium"
-          >
-            Signout
-          </StyledText>
-        </View>
+        <Pressable onPress={logoutUser}>
+          <View style={styles.signout}>
+            <LogoutCurve
+              size={20}
+              color={Colors.error}
+            />
+            <StyledText
+              color={Colors.error}
+              type="title"
+              variant="medium"
+            >
+              Signout
+            </StyledText>
+          </View>
+        </Pressable>
       </View>
     </Screen>
   );

@@ -1,20 +1,18 @@
 import {
   Image,
   View,
-  Text,
   ActivityIndicator,
   KeyboardAvoidingView,
 } from "react-native";
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { showMessage } from "react-native-flash-message";
-import * as Yup from "yup";
+import { router } from "expo-router";
+import { Formik } from "formik";
 
 import AppHeader from "@/src/components/AppHeader";
 import Screen from "@/src/components/Screen";
 import StyledText from "@/src/components/StyledText";
 import { Colors } from "@/src/constants/Colors";
-import { Formik } from "formik";
 import AppTextField from "@/src/components/AppTextField";
 import AppDivider from "@/src/components/AppDivider";
 import AppPicker from "@/src/components/AppPicker";
@@ -22,7 +20,7 @@ import AppButton from "@/src/components/AppButton";
 
 import { userProfileSchema } from "../../validationSchemas/userSchema";
 import { retrieveUserData } from "@/src/storage/userData";
-import { router } from "expo-router";
+import { createNextOfKin, getClientInfo, getNextOfKins } from "@/src/api";
 
 const PersonalDetails = () => {
   const [storedData, setStoredData] = useState(null);
@@ -36,37 +34,22 @@ const PersonalDetails = () => {
     const fetchData = async () => {
       const data = await retrieveUserData();
       setStoredData(data);
-      axios
-        .get("https://utl-proxy.vercel.app/api/v1/getclientaccountinfo", {
-          headers: { Authorization: `Bearer ${data.token}` },
-        })
-        .then((res) => {
-          const { firstname, surname, mobileNumber } = res.data;
-          setUserData({
-            firstname: firstname,
-            surname: surname,
-            mobileNumber: mobileNumber,
-          });
-        })
-        .catch((err) => console.error(err));
 
-      axios
-        .get("https://utl-proxy.vercel.app/api/v1/getnextofkins", {
-          headers: { Authorization: `Bearer ${data.token}` },
-        })
-        .then((res) => {
-          console.log("Next of kin", res.data);
-          if (res.data.length > 0) {
-            setUserHasNextOfKin(1);
-            console.log(res.data.length);
-            setNextOfKin(res.data[0]);
-            setKinRelationship(res.data[0].relationship);
-            setGender(res.data[0].gender);
-          }
-        })
-        .catch((err) => {
-          console.error(err);
-        });
+      const clientInfo = await getClientInfo();
+      const { firstname, surname, mobileNumber } = clientInfo;
+      setUserData({
+        firstname: firstname,
+        surname: surname,
+        mobileNumber: mobileNumber,
+      });
+
+      const nextOfKins = await getNextOfKins();
+      if (nextOfKins.length > 0) {
+        setUserHasNextOfKin(1);
+        setNextOfKin(nextOfKins[0]);
+        setKinRelationship(nextOfKins[0].relationship);
+        setGender(nextOfKins[0].gender);
+      }
     };
 
     fetchData();
@@ -178,10 +161,10 @@ const PersonalDetails = () => {
                       firstname: userData.firstname,
                       surname: userData.surname,
                       phoneNumber: userData.mobileNumber,
-                      kinFirstname: nexOfKin ? nexOfKin.firstname : "",
-                      kinLastname: nexOfKin ? nexOfKin.surname : "",
-                      kinEmail: nexOfKin ? nexOfKin.email : "",
-                      kinPhoneNumber: nexOfKin ? nexOfKin.telephoneNo : "",
+                      kinFirstname: nexOfKin ? nexOfKin?.firstname : "",
+                      kinLastname: nexOfKin ? nexOfKin?.surname : "",
+                      kinEmail: nexOfKin ? nexOfKin?.email : "",
+                      kinPhoneNumber: nexOfKin ? nexOfKin?.telephoneNo : "",
                     }
                   : {
                       firstname: userData.firstname,
@@ -193,46 +176,27 @@ const PersonalDetails = () => {
                       kinPhoneNumber: "",
                     }
               }
-              onSubmit={(values) => {
+              onSubmit={async (values) => {
                 const { kinEmail, kinFirstname, kinLastname, kinPhoneNumber } =
                   values;
+
+                const nextOfKinData = {
+                  email: kinEmail,
+                  firstname: kinFirstname,
+                  surname: kinLastname,
+                  telephoneNo: kinPhoneNumber,
+                  relationship: kinRelationship,
+                  gender: gender,
+                };
                 if (userHasNextOfKin === 0) {
-                  axios
-                    .post(
-                      "https://utl-proxy.vercel.app/api/v1/createnextofkin",
-                      {
-                        email: kinEmail,
-                        firstname: kinFirstname,
-                        surname: kinLastname,
-                        telephoneNo: kinPhoneNumber,
-                        relationship: kinRelationship,
-                        gender: gender,
-                      },
-                      {
-                        headers: {
-                          Authorization: `Bearer ${
-                            storedData && storedData.token
-                          }`,
-                        },
-                      }
-                    )
-                    .then((res) => {
-                      console.log(res.data);
-                      if (res.status === 200) {
-                        showMessage({
-                          message: "Profile has been updated succesfully",
-                          type: "success",
-                        });
-                        router.replace("/(tabs)/profile");
-                      }
-                    })
-                    .catch((err) => {
-                      console.error(err);
-                      showMessage({
-                        message: "An error occured",
-                        type: "warning",
-                      });
+                  const data = await createNextOfKin(nextOfKinData);
+                  if (data) {
+                    showMessage({
+                      message: "Profile has been updated succesfully",
+                      type: "success",
                     });
+                    router.replace("/(tabs)/profile");
+                  }
                 }
               }}
             >
@@ -249,7 +213,8 @@ const PersonalDetails = () => {
                       label={"Full name"}
                       onChangeText={handleChange("firstname")}
                       width={"48%"}
-                      value={userData && userData.firstname}
+                      value={userData && userData?.firstname}
+                      readonly
                     />
                     <AppTextField
                       name={"surname"}
@@ -257,6 +222,7 @@ const PersonalDetails = () => {
                       width={"48%"}
                       rightLabel={"-Update your full name"}
                       rightLabelColor={Colors.light}
+                      readonly
                     />
                   </View>
                   <AppTextField
@@ -265,6 +231,7 @@ const PersonalDetails = () => {
                     label={"Phone Number"}
                     rightLabel={"-Update your phone number"}
                     rightLabelColor={Colors.light}
+                    readonly
                   />
 
                   <StyledText

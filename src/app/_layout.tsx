@@ -1,19 +1,15 @@
 import "react-native-reanimated";
-import { Platform } from "react-native";
+import { Platform, StatusBar } from "react-native";
 import { useFonts } from "expo-font";
 import { View, Text } from "react-native";
-import { Stack, useSegments, useRouter } from "expo-router";
+import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import FlashMessage from "react-native-flash-message";
 
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from "expo-router";
+export { ErrorBoundary } from "expo-router";
 
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
   // initialRouteName: "(auth)",
 };
 
@@ -49,10 +45,8 @@ export default function RootLayout() {
 function RootLayoutNav() {
   return (
     <>
-      <Stack
-        screenOptions={{ headerShown: false, animation: "ios" }}
-        initialRouteName="/(auth)/login"
-      >
+      <Stack screenOptions={{ headerShown: false, animation: "ios" }}>
+        <Stack.Screen name="index" />
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(app)" />
         <Stack.Screen name="(tabs)" />

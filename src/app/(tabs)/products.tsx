@@ -84,6 +84,7 @@ const Products = () => {
                   <Link
                     href={"/product-details"}
                     asChild
+                    key={index}
                   >
                     {filter === "all" ? (
                       <Product

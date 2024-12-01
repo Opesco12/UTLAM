@@ -2,7 +2,6 @@ import { StyleSheet, View, StatusBar, ActivityIndicator } from "react-native";
 import { useEffect, useState } from "react";
 import { Icon } from "@rneui/themed";
 import { Formik } from "formik";
-import axios from "axios";
 
 import { Colors } from "@/src/constants/Colors";
 import AppTextField from "@/src/components/AppTextField";
@@ -15,7 +14,7 @@ import AppPicker from "@/src/components/AppPicker";
 import { showMessage } from "react-native-flash-message";
 import { router } from "expo-router";
 
-import { registerNewIndividual, getCurrencies } from "../../api/index";
+import { registerNewIndividual, getCountries } from "../../api/index";
 import { userRegisterSchema } from "../../validationSchemas/userSchema";
 import { formatDate } from "../../helperFunctions/formatDate";
 
@@ -37,17 +36,20 @@ const Register = () => {
   ];
 
   useEffect(() => {
-    axios
-      .get("https://utl-proxy.vercel.app/api/v1/getcountries")
-      .then((res) => {
+    const fetchData = async () => {
+      const countries = await getCountries();
+
+      if (countries) {
         setCountries(
-          res.data.map((country) => ({
+          countries.map((country) => ({
             label: country.name,
             value: country.code,
           }))
         );
-      })
-      .catch((err) => console.error("Unable to fetch countries"));
+      }
+    };
+
+    fetchData();
   }, []);
 
   return (
@@ -84,7 +86,7 @@ const Register = () => {
             state: "",
             clientType: 1,
           }}
-          onSubmit={(values, { setSubmitting, resetForm }) => {
+          onSubmit={async (values, { setSubmitting, resetForm }) => {
             setSubmitting(true);
             const {
               firstname,
@@ -98,55 +100,37 @@ const Register = () => {
               clientType,
             } = values;
 
-            axios
-              .post(
-                "https://utl-proxy.vercel.app/api/v1/registernewindividual",
-                {
-                  dateOfBirth: DOB.toISOString(),
-                  emailAddress: email,
-                  password: password,
-                  firstName: firstname,
-                  lastName: lastname,
-                  phoneNo: phoneNumber,
-                  clientType: clientType,
-                  gender: gender,
-                  address1: address,
-                  city: city,
-                  state: state,
-                  country: userCountry,
-                }
-              )
-              .then((res) => {
-                setSubmitting(false);
-                resetForm();
-                if (res.status === 200) {
-                  showMessage({
-                    message: "You have successfully created an account",
-                    type: "success",
-                  });
-                  router.replace({
-                    pathname: "/(auth)/otp",
-                    params: {
-                      username: email,
-                      header: "Activate account",
-                    },
-                  });
-                }
-              })
-              .catch((err) => {
-                setSubmitting(false);
-                if (err.status === 400) {
-                  showMessage({
-                    message: `Email address ${email} or phone number has been used or is not available`,
-                    type: "warning",
-                  });
-                } else {
-                  showMessage({
-                    message: "Please try again later",
-                    type: "warning",
-                  });
-                }
+            const data = {
+              dateOfBirth: DOB.toISOString(),
+              emailAddress: email,
+              password: password,
+              firstName: firstname,
+              lastName: lastname,
+              phoneNo: phoneNumber,
+              clientType: clientType,
+              gender: gender,
+              address1: address,
+              city: city,
+              state: state,
+              country: userCountry,
+            };
+
+            const response = await registerNewIndividual(data);
+            if (response) {
+              setSubmitting(false);
+              showMessage({
+                message: "You have successfully created an account",
+                type: "success",
               });
+              router.replace({
+                pathname: "/(auth)/otp",
+                params: {
+                  username: email,
+                  header: "Activate Account",
+                },
+              });
+            }
+            setSubmitting(false);
           }}
         >
           {({ handleChange, handleSubmit, isSubmitting }) => (

@@ -56,6 +56,24 @@ export const userRegisterSchema = Yup.object().shape({
 
 export const passwordResetSchema = Yup.object().shape({
   email: Yup.string().email("Email is not valid").required("Email is required"),
+  password: Yup.string()
+    .required("Password is required")
+    .min(6, "Password must be at least 6 characters")
+    .matches(
+      /^[A-Za-z\d@$!%*?#&]+$/,
+      "Password can only contain letters, numbers, and @$!%*#?&"
+    )
+    .matches(/[a-z]/, "Password must contain at least one lowercase letter")
+    .matches(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .matches(/\d/, "Password must contain at least one number")
+    .matches(
+      /[@$!%*?&#]/,
+      "Password must contain at least one special character (@$!%*?&#)"
+    ),
+  confirmPassword: Yup.string()
+    .oneOf([Yup.ref("newPassword"), null], "Passwords must match")
+    .required("Confirm Password is required"),
+  token: Yup.string("Please input the token in your mail").required(),
 });
 
 export const userProfileSchema = Yup.object().shape({
@@ -104,6 +122,6 @@ export const changePasswordSchema = Yup.object().shape({
       "Password must contain at least one special character (@$!%*?&#)"
     ),
   confirmPassword: Yup.string()
-    .oneOf([Yup.ref("password"), null], "Passwords must match")
+    .oneOf([Yup.ref("newPassword"), null], "Passwords must match")
     .required("Confirm Password is required"),
 });

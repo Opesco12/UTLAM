@@ -22,7 +22,7 @@ import {
   Copy,
   Refresh2,
 } from "iconsax-react-native";
-import { useFocusEffect } from "@react-navigation/native";
+// import { useFocusEffect } from "@react-navigation/native";
 
 import { Colors } from "@/src/constants/Colors";
 import MediumBox from "@/src/components/MediumBox";
@@ -77,29 +77,29 @@ const index = () => {
     fetchData();
   }, []);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      const onBackPress = () => {
-        return true; // Prevent default behavior (going back)
-      };
+  // useFocusEffect(
+  //   React.useCallback(() => {
+  //     const onBackPress = () => {
+  //       return true; // Prevent default behavior (going back)
+  //     };
 
-      BackHandler.addEventListener("hardwareBackPress", onBackPress);
+  //     BackHandler.addEventListener("hardwareBackPress", onBackPress);
 
-      return () =>
-        BackHandler.removeEventListener("hardwareBackPress", onBackPress);
-    }, [])
-  );
+  //     return () =>
+  //       BackHandler.removeEventListener("hardwareBackPress", onBackPress);
+  //   }, [])
+  // );
 
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchData();
-    setRefreshing(false);
-  }, []);
+  // const onRefresh = useCallback(() => {
+  //   setRefreshing(true);
+  //   fetchData();
+  //   setRefreshing(false);
+  // }, []);
 
   return (
     <LayeredScreen
-      onRefresh={onRefresh}
-      refreshing={refreshing}
+    // onRefresh={onRefresh}
+    // refreshing={refreshing}
     >
       <View style={{ paddingHorizontal: 20, flex: 1, flexGrow: 1 }}>
         <View

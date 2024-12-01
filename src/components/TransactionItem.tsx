@@ -1,5 +1,5 @@
-import { StyleSheet, View } from "react-native";
-import { Receive } from "iconsax-react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import { router } from "expo-router";
 
 import { Colors } from "@/src/constants/Colors";
 import StyledText from "./StyledText";
@@ -7,8 +7,18 @@ import { amountFormatter } from "../helperFunctions/amountFormatter";
 import AppDivider from "./AppDivider";
 
 const TransactionItem = ({ transaction }) => {
+  const transactionDate = new Date(transaction.valueDate).toDateString();
   return (
-    <>
+    <Pressable
+      onPress={() => {
+        router.push({
+          pathname: "/(app)/tranasaction-details",
+          params: {
+            transaction: JSON.stringify(transaction),
+          },
+        });
+      }}
+    >
       <View style={styles.container}>
         <View style={{ width: "70%" }}>
           <StyledText
@@ -16,13 +26,13 @@ const TransactionItem = ({ transaction }) => {
             type="body"
             numberOfLines={1}
           >
-            {transaction.description} - {transaction.portfolio}
+            {transaction.description} {"-"} {transaction.portfolio}
           </StyledText>
           <StyledText
             type="label"
             color={Colors.light}
           >
-            Sep 12th, 10:36:46
+            {transactionDate}
           </StyledText>
         </View>
 
@@ -36,7 +46,7 @@ const TransactionItem = ({ transaction }) => {
         </StyledText>
       </View>
       <AppDivider />
-    </>
+    </Pressable>
   );
 };
 

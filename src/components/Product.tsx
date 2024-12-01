@@ -11,7 +11,6 @@ import AppDivider from "./AppDivider";
 import { showMessage } from "react-native-flash-message";
 
 const Product = React.forwardRef(({ onPress, product }, ref) => {
-  const navigation = useNavigation();
   function convertToKebabCase(inputString) {
     inputString = inputString.trim();
 

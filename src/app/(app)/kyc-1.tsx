@@ -15,7 +15,6 @@ import ImageView from "react-native-image-viewing";
 import LottieView from "lottie-react-native";
 import { showMessage } from "react-native-flash-message";
 import * as Yup from "yup";
-import axios from "axios";
 
 import { Colors } from "@/src/constants/Colors";
 import AppTextField from "@/src/components/AppTextField";
@@ -98,6 +97,7 @@ const KYC_1 = () => {
       aspect: [4, 3],
       quality: 1,
       selectionLimit: 1,
+      base64: true,
     });
 
     setIsModalOpen(false);
@@ -137,7 +137,10 @@ const KYC_1 = () => {
       cameraType: ImagePicker.CameraType.back,
       aspect: [4, 3],
       quality: 1,
+      base64: true,
     });
+
+    console.log(result);
     if (!result.canceled) {
       setCapturedImage(result && result.assets[0].uri);
     }

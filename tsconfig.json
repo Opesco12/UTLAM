@@ -11,6 +11,9 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
-    "src/app/(app)/product-details.jsx"
+    "src/app/(app)/product-details.jsx",
+    "src/app/(app)/portfolio-details.jsx",
+    "src/app/(app)/tranasaction-details.jsx",
+    "src/app/(app)/fixed-income-withdrawal.jsx"
   ]
 }
