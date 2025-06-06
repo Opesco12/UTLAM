@@ -7,7 +7,14 @@ import StyledText from "./StyledText";
 const SavingDetails = ({ title, detail, icon }) => {
   return (
     <View style={styles.container}>
-      <View style={{ flexDirection: "row", gap: 5, alignItems: "center" }}>
+      <View
+        style={{
+          flexDirection: "row",
+          gap: 5,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         {icon}
         <StyledText
           type="label"
@@ -21,6 +28,7 @@ const SavingDetails = ({ title, detail, icon }) => {
         type="subheading"
         variant="medium"
         color={Colors.primary}
+        style={{ textAlign: "center" }}
       >
         {detail}
       </StyledText>

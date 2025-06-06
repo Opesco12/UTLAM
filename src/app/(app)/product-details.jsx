@@ -159,73 +159,123 @@ const ProductDetails = ({}) => {
                 gap: 15,
               }}
             >
-              <ContentBox customStyles={{ padding: 0, borderWidth: 0 }}>
-                <ContentBox
-                  customStyles={{
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    padding: 0,
-                    borderWidth: 0,
-                  }}
-                >
-                  <SavingDetails
-                    title={"Annualized Yield"}
-                    detail={"8.99%"}
-                    icon={
-                      <PercentageCircle
-                        variant="Bold"
-                        size={25}
-                        color={Colors.primary}
-                      />
-                    }
-                  />
-                  <SavingDetails
-                    title={"Min. Investment"}
-                    detail={amountFormatter.format(product?.minimumInvestment)}
-                    icon={
-                      <Moneys
-                        variant="Bold"
-                        size={25}
-                        color={Colors.primary}
-                      />
-                    }
-                  />
-                </ContentBox>
-              </ContentBox>
+              {product?.portfolioType === 9 && (
+                <ContentBox customStyles={{ padding: 0, borderWidth: 0 }}>
+                  <ContentBox
+                    customStyles={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      padding: 0,
+                      borderWidth: 0,
+                    }}
+                  >
+                    <SavingDetails
+                      title={"Min. Investment"}
+                      detail={amountFormatter.format(
+                        product?.minimumInvestment
+                      )}
+                      icon={
+                        <Moneys
+                          variant="Bold"
+                          size={25}
+                          color={Colors.primary}
+                        />
+                      }
+                    />
 
-              <ContentBox customStyles={{ padding: 0, borderWidth: 0 }}>
-                <ContentBox
-                  customStyles={{
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    padding: 0,
-                    borderWidth: 0,
-                  }}
-                >
-                  <SavingDetails
-                    title={"Min. Holding Period"}
-                    detail={`${product?.minimumHoldingPeriod} Days`}
-                    icon={
-                      <Calendar2
-                        variant="Bold"
-                        size={25}
-                        color={Colors.primary}
-                      />
-                    }
-                  />
-                  <SavingDetails
-                    title={"Penalty Rate"}
-                    detail={`${product?.earlyRedemptionPenaltyRate}%`}
-                    icon={
-                      <Judge
-                        variant="Bold"
-                        size={25}
-                        color={Colors.primary}
-                      />
-                    }
-                  />
+                    <SavingDetails
+                      title={"Penalty Rate"}
+                      detail={`${product?.earlyRedemptionPenaltyRate}%`}
+                      icon={
+                        <Judge
+                          variant="Bold"
+                          size={25}
+                          color={Colors.primary}
+                        />
+                      }
+                    />
+                  </ContentBox>
                 </ContentBox>
-              </ContentBox>
+              )}
+              {product?.portfolioType !== 9 && (
+                <>
+                  <ContentBox customStyles={{ padding: 0, borderWidth: 0 }}>
+                    <ContentBox
+                      customStyles={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        padding: 0,
+                        borderWidth: 0,
+                      }}
+                    >
+                      <SavingDetails
+                        title={"Annualized Yield"}
+                        detail={"8.99%"}
+                        icon={
+                          <PercentageCircle
+                            variant="Bold"
+                            size={25}
+                            color={Colors.primary}
+                          />
+                        }
+                      />
+
+                      <SavingDetails
+                        title={"Min. Investment"}
+                        detail={amountFormatter.format(
+                          product?.minimumInvestment
+                        )}
+                        icon={
+                          <Moneys
+                            variant="Bold"
+                            size={25}
+                            color={Colors.primary}
+                          />
+                        }
+                      />
+                    </ContentBox>
+                  </ContentBox>
+
+                  <ContentBox
+                    customStyles={{
+                      padding: 0,
+                      borderWidth: 0,
+                    }}
+                  >
+                    <ContentBox
+                      customStyles={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        padding: 0,
+                        borderWidth: 0,
+                      }}
+                    >
+                      <SavingDetails
+                        title={"Min. Holding Period"}
+                        detail={`${product?.minimumHoldingPeriod} Days`}
+                        icon={
+                          <Calendar2
+                            variant="Bold"
+                            size={25}
+                            color={Colors.primary}
+                          />
+                        }
+                      />
+                      <SavingDetails
+                        title={"Penalty Rate"}
+                        detail={`${product?.earlyRedemptionPenaltyRate}%`}
+                        icon={
+                          <Judge
+                            variant="Bold"
+                            size={25}
+                            color={Colors.primary}
+                          />
+                        }
+                      />
+                    </ContentBox>
+                  </ContentBox>
+                </>
+              )}
             </ContentBox>
 
             <Formik

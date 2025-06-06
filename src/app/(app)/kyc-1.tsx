@@ -1,445 +1,471 @@
 import {
   StyleSheet,
-  Image,
   View,
+  ActivityIndicator,
+  Dimensions,
   TouchableOpacity,
-  TouchableWithoutFeedback,
+  Alert,
+  Image,
 } from "react-native";
 import { useEffect, useState } from "react";
-import { AntDesign } from "@expo/vector-icons";
 import { Formik } from "formik";
-import { Link, router } from "expo-router";
-import { Camera, CloseCircle, Gallery } from "iconsax-react-native";
-import * as ImagePicker from "expo-image-picker";
-import ImageView from "react-native-image-viewing";
-import LottieView from "lottie-react-native";
-import { showMessage } from "react-native-flash-message";
 import * as Yup from "yup";
+import { toast } from "sonner-native";
+import { TabView, SceneMap, TabBar } from "react-native-tab-view";
+import * as DocumentPicker from "expo-document-picker";
+import * as ImagePicker from "expo-image-picker";
 
 import { Colors } from "@/src/constants/Colors";
 import AppTextField from "@/src/components/AppTextField";
 import AppButton from "@/src/components/AppButton";
-import AppPicker from "@/src/components/AppPicker";
 import StyledText from "@/src/components/StyledText";
 import AppHeader from "@/src/components/AppHeader";
 import Screen from "@/src/components/Screen";
-import AppModal from "@/src/components/AppModal";
-import AppDatePicker from "@/src/components/AppDatePicker";
 
-import { retrieveUserData } from "@/src/storage/userData";
-import { verifyDocuments } from "../../api/verification/index";
-import { handleVerificationResponses } from "../../helperFunctions/verification";
-import { formatDate } from "../../helperFunctions/formatDate";
+import {
+  getClientInfo,
+  updateClientInfo,
+  getPendingDocuments,
+  uploadClientDocument,
+} from "@/src/api";
+
+const initialLayout = { width: Dimensions.get("window").width };
 
 const KYC_1 = () => {
-  const [userData, setUserData] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [documentType, setDocumentType] = useState(null);
-  const [dob, setDob] = useState(null);
-  const [documentImage, setDocumentImage] = useState({ uri: "" });
-  const [visible, setIsVisible] = useState(false);
-  const [capturedImage, setCapturedImage] = useState(null);
-  const [verifying, setVerifying] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [data, setData] = useState({
+    nin: null,
+    bvn: null,
+  });
+  const [clientInfo, setClientInfo] = useState(null);
+  const [pendingDocuments, setPendingDocuments] = useState([]);
+  const [selectedDocuments, setSelectedDocuments] = useState({});
+  const [isUploading, setIsUploading] = useState({});
 
-  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-
-  const options = [
-    {
-      label: "International Passport",
-      value: "International Passport",
-    },
-    { label: "Driver's License", value: "Driver's License" },
-    { label: "Voter's Card", value: "Voter's Card" },
-  ];
+  const [index, setIndex] = useState(0);
+  const [routes] = useState([
+    { key: "numbers", title: "Verification Numbers" },
+    { key: "documents", title: "Documents Upload" },
+  ]);
 
   const kycValidationSchema = Yup.object().shape({
     nin: Yup.string()
       .matches(/^\d{11}$/, "NIN must be exactly 11 digits")
       .required("NIN is required"),
-
     bvn: Yup.string()
       .matches(/^\d{11}$/, "BVN must be exactly 11 digits")
       .required("BVN is required"),
-
-    documentNumber: Yup.string().when(() => {
-      return documentType !== null
-        ? Yup.string().required("Document Number is required")
-        : Yup.string().notRequired();
-    }),
-
-    firstname: Yup.string().when(() => {
-      return documentType !== null
-        ? Yup.string().required("First Name is required")
-        : Yup.string().notRequired();
-    }),
-    lastname: Yup.string().when(() => {
-      return documentType !== null
-        ? Yup.string().required("Last Name is required")
-        : Yup.string().notRequired();
-    }),
-    voterLga: Yup.string().when(() => {
-      return documentType === "Voter's Card"
-        ? Yup.string().required("Local Goverment Area is required")
-        : Yup.string().notRequired();
-    }),
-    voterState: Yup.string().when(() => {
-      return documentType === "Voter's Card"
-        ? Yup.string().required("State is required")
-        : Yup.string().notRequired();
-    }),
   });
-
-  const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: false,
-      allowsMultipleSelection: false,
-      aspect: [4, 3],
-      quality: 1,
-      selectionLimit: 1,
-      base64: true,
-    });
-
-    setIsModalOpen(false);
-    console.log(result);
-
-    if (!result.canceled) {
-      setDocumentImage({ uri: result.assets[0].uri });
-    }
-  };
-
-  const images = [documentImage && documentImage];
-
-  useEffect(() => {
-    if (capturedImage !== null) {
-      setDocumentImage({ uri: capturedImage });
-      // setFieldValue("imageUri", capturedImage);
-    }
-  }, [capturedImage]);
 
   useEffect(() => {
     const fetchData = async () => {
-      const data = await retrieveUserData();
-      const names = data.fullName.split(" ");
-      setUserData({
-        firstname: names[0],
-        surname: names[1],
-      });
+      const response = await getClientInfo();
+      if (response) {
+        setData({
+          nin: response?.nin,
+          bvn: response?.bvn,
+        });
+
+        setClientInfo({
+          clientType: response?.clientType,
+          clientGroupId: response?.clientGroupId,
+          surname: response?.surname,
+          firstname: response?.firstname,
+          dateOfBirth: response?.dateOfBirth,
+          emailAddress: response?.emailAddress,
+          address1: response?.address1,
+          mobileNumber: response?.mobileNumber,
+          gender: response?.gender,
+          titleCode: response?.titleCode,
+        });
+
+        const pendingDocs = await getPendingDocuments();
+        const requiredDocs = pendingDocs.filter(
+          (doc) =>
+            (doc.document === "MEANS OF IDENTIFICATION" && doc?.uploaded < 1) ||
+            (doc.document === "PASSPORTS" && doc?.uploaded < 1) ||
+            (doc.document === "UTILITY BILL" && doc?.uploaded < 1)
+        );
+        setPendingDocuments(requiredDocs);
+      }
+      setIsLoading(false);
     };
 
     fetchData();
   }, []);
 
-  const takePhoto = async () => {
-    setIsModalOpen(false);
-    let result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      cameraType: ImagePicker.CameraType.back,
-      aspect: [4, 3],
-      quality: 1,
-      base64: true,
-    });
-
-    console.log(result);
-    if (!result.canceled) {
-      setCapturedImage(result && result.assets[0].uri);
+  const handleUpdateInfo = async (values) => {
+    try {
+      const data = await updateClientInfo({
+        ...(clientInfo || {}),
+        nin: values?.nin,
+        bvn: values?.bvn,
+      });
+      if (data) {
+        toast.success("Data updated successfully");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update data");
     }
   };
+
+  const showDocumentPicker = (documentType) => {
+    Alert.alert(
+      "Select Document",
+      "Choose how you want to select your document",
+      [
+        {
+          text: "Camera",
+          onPress: () => pickFromCamera(documentType),
+        },
+        {
+          text: "Gallery",
+          onPress: () => pickFromGallery(documentType),
+        },
+        {
+          text: "Files",
+          onPress: () => pickFromFiles(documentType),
+        },
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+      ]
+    );
+  };
+
+  const pickFromCamera = async (documentType) => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== "granted") {
+        toast.error("Camera permission is required");
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setSelectedDocuments((prev) => ({
+          ...prev,
+          [documentType]: result.assets[0],
+        }));
+      }
+    } catch (error) {
+      toast.error("Error accessing camera");
+      console.error(error);
+    }
+  };
+
+  const pickFromGallery = async (documentType) => {
+    try {
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        toast.error("Gallery permission is required");
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setSelectedDocuments((prev) => ({
+          ...prev,
+          [documentType]: result.assets[0],
+        }));
+      }
+    } catch (error) {
+      toast.error("Error accessing gallery");
+      console.error(error);
+    }
+  };
+
+  const pickFromFiles = async (documentType) => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ["image/jpeg", "image/jpg", "image/png", "application/pdf"],
+        copyToCacheDirectory: true,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setSelectedDocuments((prev) => ({
+          ...prev,
+          [documentType]: result.assets[0],
+        }));
+      }
+    } catch (error) {
+      toast.error("Error selecting document");
+      console.error(error);
+    }
+  };
+
+  const uploadDocument = async (documentId, documentType) => {
+    const document = selectedDocuments[documentType];
+    if (!document) {
+      toast.error("Please select a document first");
+      return;
+    }
+
+    setIsUploading((prev) => ({ ...prev, [documentType]: true }));
+
+    try {
+      const response = await uploadClientDocument(
+        document,
+        documentId,
+        documentType
+      );
+      console.log(response);
+      console.log("Document: ", document);
+      console.log("document type: ", documentType);
+      toast.success(`${documentType} uploaded successfully`);
+
+      setSelectedDocuments((prev) => {
+        const updated = { ...prev };
+        delete updated[documentType];
+        return updated;
+      });
+
+      const pendingDocs = await getPendingDocuments();
+      const requiredDocs = pendingDocs.filter(
+        (doc) =>
+          (doc.document === "MEANS OF IDENTIFICATION" && doc?.uploaded < 1) ||
+          (doc.document === "PASSPORTS" && doc?.uploaded < 1) ||
+          (doc.document === "UTILITY BILL" && doc?.uploaded < 1)
+      );
+      setPendingDocuments(requiredDocs);
+    } catch (error) {
+      toast.error(`Failed to upload ${documentType}`);
+      console.error(error);
+    } finally {
+      setIsUploading((prev) => ({ ...prev, [documentType]: false }));
+    }
+  };
+
+  const getDocumentDisplayName = (docType) => {
+    switch (docType) {
+      case "MEANS OF IDENTIFICATION":
+        return "ID Document";
+      case "PASSPORTS":
+        return "Passport Photo";
+      case "UTILITY BILL":
+        return "Utility Bill";
+      default:
+        return docType;
+    }
+  };
+
+  const VerificationNumbers = () => (
+    <Formik
+      enableReinitialize={true}
+      validationSchema={kycValidationSchema}
+      initialValues={{
+        nin: data?.nin || "",
+        bvn: data?.bvn || "",
+      }}
+      onSubmit={async (values) => {
+        await handleUpdateInfo(values);
+      }}
+    >
+      {({ handleChange, handleSubmit }) => (
+        <View style={{ marginTop: 20 }}>
+          <AppTextField
+            label={"National Identification Number"}
+            name="nin"
+            onChangeText={handleChange("nin")}
+            secureTextEntry
+            disabled={data?.nin ? true : false}
+          />
+          <AppTextField
+            label={"Biometric Verification Number"}
+            name="bvn"
+            onChangeText={handleChange("bvn")}
+            secureTextEntry
+            disabled={data?.bvn ? true : false}
+          />
+          <AppButton
+            customStyles={{ marginTop: 30, marginBottom: 20 }}
+            disabled={data?.bvn === null || data?.nin === null ? false : true}
+            onPress={handleSubmit}
+          >
+            Save
+          </AppButton>
+        </View>
+      )}
+    </Formik>
+  );
+
+  const DocumentUpload = () => (
+    <View style={styles.documentContainer}>
+      {pendingDocuments.length === 0 ? (
+        <View style={styles.noDocumentsContainer}>
+          <StyledText
+            type="title"
+            variant="medium"
+            style={styles.noDocumentsText}
+          >
+            All required documents have been uploaded
+          </StyledText>
+        </View>
+      ) : (
+        <>
+          <StyledText
+            type="title"
+            variant="medium"
+            style={styles.documentTitle}
+          >
+            Upload Required Documents
+          </StyledText>
+          <StyledText style={{ textAlign: "center" }}>
+            Supported formats: JPG, PNG, PDF
+          </StyledText>
+
+          {pendingDocuments.map((doc, index) => {
+            const docType = doc.document;
+            const isSelected = selectedDocuments[docType];
+            const isUploadingDoc = isUploading[docType];
+            const isImage =
+              isSelected &&
+              (isSelected.mimeType || isSelected.type)?.startsWith("image/");
+
+            return (
+              <View
+                key={docType}
+                style={styles.documentItem}
+              >
+                <View style={styles.documentHeader}>
+                  <StyledText
+                    type="title"
+                    variant="medium"
+                  >
+                    {getDocumentDisplayName(docType)}
+                  </StyledText>
+                  {isSelected && (
+                    <View style={styles.previewContainer}>
+                      {isImage ? (
+                        <Image
+                          source={{ uri: isSelected.uri }}
+                          style={styles.previewImage}
+                          resizeMode="contain"
+                        />
+                      ) : (
+                        <StyledText
+                          variant="semibold"
+                          style={styles.selectedText}
+                        >
+                          Selected: {isSelected.name || "Document"}
+                        </StyledText>
+                      )}
+                    </View>
+                  )}
+                </View>
+
+                <View style={styles.buttonContainer}>
+                  <TouchableOpacity
+                    style={[
+                      styles.selectButton,
+                      isSelected && styles.buttonConfirm,
+                    ]}
+                    onPress={() => showDocumentPicker(docType)}
+                    disabled={isUploadingDoc}
+                  >
+                    <StyledText
+                      variant="semibold"
+                      type="label"
+                      color={isSelected ? Colors.white : Colors.black}
+                    >
+                      {isSelected ? "Change Document" : "Select Document"}
+                    </StyledText>
+                  </TouchableOpacity>
+
+                  {isSelected && (
+                    <TouchableOpacity
+                      style={[
+                        styles.buttonConfirm,
+                        isUploadingDoc && styles.buttonDisabled,
+                      ]}
+                      onPress={() => uploadDocument(doc?.documentId, docType)}
+                      disabled={isUploadingDoc}
+                    >
+                      {isUploadingDoc ? (
+                        <ActivityIndicator
+                          size="small"
+                          color={Colors.white}
+                        />
+                      ) : (
+                        <StyledText
+                          variant="semibold"
+                          type="label"
+                          color={Colors.white}
+                        >
+                          Upload
+                        </StyledText>
+                      )}
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            );
+          })}
+        </>
+      )}
+    </View>
+  );
+
+  const renderScene = SceneMap({
+    numbers: VerificationNumbers,
+    documents: DocumentUpload,
+  });
+
+  if (isLoading) {
+    return (
+      <Screen>
+        <AppHeader />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator
+            size="large"
+            color={Colors.primary}
+          />
+        </View>
+      </Screen>
+    );
+  }
 
   return (
     <Screen>
       <AppHeader />
-
-      <View style={{ marginTop: 20 }}>
+      <View style={styles.headerContainer}>
         <StyledText
           type="heading"
           variant="semibold"
         >
           KYC Details
         </StyledText>
-        <StyledText
-          type="body"
-          variant="medium"
-          color={Colors.light}
-        >
-          Step 1 of 2
-        </StyledText>
-
-        <Formik
-          validationSchema={kycValidationSchema}
-          initialValues={{
-            nin: "",
-            bvn: "",
-            documentNumber: "",
-            firstname: "",
-            lastname: "",
-            voterLga: "",
-            voterState: "",
-          }}
-          onSubmit={async (values, { resetForm }) => {
-            setVerifying(true);
-            console.log(values);
-            const {
-              bvn,
-              nin,
-              firstname,
-              lastname,
-              voterLga,
-              documentNumber,
-              voterState,
-            } = values;
-
-            console.log(values);
-
-            const responses = await verifyDocuments({
-              bvn: bvn,
-              nin: nin,
-              userData: userData,
-            });
-
-            // handleVerificationResponses(responses);
-            setVerifying(false);
-          }}
-        >
-          {({ handleChange, handleSubmit, errors, touched, setFieldValue }) => (
-            <View style={{ marginTop: 20 }}>
-              <AppTextField
-                label={"National Identification Number"}
-                name="nin"
-                onChangeText={handleChange("nin")}
-              />
-              <AppTextField
-                label={"Biometric Verification Number"}
-                name="bvn"
-                onChangeText={handleChange("bvn")}
-              />
-
-              <AppPicker
-                label={"Government Issued Identification"}
-                placeholder={"Select Document Type"}
-                options={options}
-                onValueChange={(value) => {
-                  setDocumentType(value);
-                  setFieldValue("selectedDocument", value);
-                }}
-                value={documentType}
-              />
-
-              {documentType && (
-                <>
-                  <AppTextField
-                    label={"Document Number"}
-                    name={"documentNumber"}
-                    onChangeText={handleChange("documentNumber")}
-                  />
-                  <AppTextField
-                    label={"First Name"}
-                    name={"firstname"}
-                    onChangeText={handleChange("firstname")}
-                  />
-                  <AppTextField
-                    label={"Last Name"}
-                    name={"lastname"}
-                    onChangeText={handleChange("lastname")}
-                  />
-                  <StyledText
-                    type="label"
-                    variant="medium"
-                    color={Colors.primary}
-                    style={{ marginTop: 10 }}
-                  >
-                    Date of Birth
-                  </StyledText>
-                  <AppButton
-                    onPress={() => setDatePickerVisibility(true)}
-                    customStyles={{
-                      backgroundColor: Colors.white,
-                      borderWidth: 1,
-                      borderColor: Colors.light,
-                      marginTop: 5,
-                      marginBottom: 10,
-                    }}
-                    textColor={Colors.primary}
-                  >
-                    {dob !== null ? formatDate(dob) : "Select Date of Birth"}
-                  </AppButton>
-                </>
-              )}
-
-              {documentType && documentType === "Voter's Card" && (
-                <>
-                  <AppTextField
-                    label={"State"}
-                    name={"voterState"}
-                    onChangeText={handleChange("voterState")}
-                  />
-                  <AppTextField
-                    label={"Local Government Area"}
-                    name={"voterLga"}
-                    onChangeText={handleChange("voterLga")}
-                  />
-                </>
-              )}
-              {documentType && (
-                <>
-                  <StyledText
-                    type="label"
-                    variant="medium"
-                    color={Colors.primary}
-                    style={{ marginBottom: 5 }}
-                  >
-                    Upload ID Document
-                  </StyledText>
-                  <AppButton
-                    customStyles={{
-                      backgroundColor: Colors.white,
-                      borderWidth: 1,
-                      borderColor: Colors.light,
-                    }}
-                    textColor={Colors.primary}
-                    onPress={() => setIsModalOpen(!isModalOpen)}
-                  >
-                    <AntDesign
-                      name="cloudupload"
-                      size={20}
-                      color={Colors.primary}
-                    />
-                    Upload File (JPG, PNG, PDF)
-                  </AppButton>
-                </>
-              )}
-
-              {documentImage && documentImage.uri !== "" && (
-                <View style={{ flexDirection: "row" }}>
-                  <TouchableWithoutFeedback
-                    onPress={() => setIsVisible(true)}
-                    style={{ flexDirection: "row", gap: 40 }}
-                  >
-                    <Image
-                      source={{ uri: documentImage && documentImage.uri }}
-                      style={{
-                        height: 50,
-                        width: 50,
-                        marginVertical: 10,
-                        borderRadius: 10,
-                      }}
-                    />
-                  </TouchableWithoutFeedback>
-                </View>
-              )}
-              <AppButton
-                onPress={() => {
-                  if (documentType !== null && dob !== null) {
-                    if (documentType !== "Voter's Card") {
-                      handleSubmit();
-                    } else if (documentType === "Voter's Card") {
-                      handleSubmit();
-                    } else {
-                      showMessage({
-                        message: `Please upload or take a picture of your ${documentType}`,
-                        type: "warning",
-                      });
-                    }
-                  } else {
-                    showMessage({
-                      message: "Please fill out all fields",
-                      type: "warning",
-                    });
-                  }
-                }}
-                customStyles={{ marginTop: 30, marginBottom: 20 }}
-              >
-                Submit
-              </AppButton>
-            </View>
-          )}
-        </Formik>
       </View>
-      <AppModal
-        isModalVisible={isModalOpen}
-        setIsModalVisible={setIsModalOpen}
-        modalHeight={200}
-      >
-        <View style={{ paddingVertical: 20, gap: 15 }}>
-          <TouchableOpacity
-            style={styles.modalList}
-            onPress={takePhoto}
-          >
-            <Camera
-              size={25}
-              color={Colors.primary}
-            />
-            <StyledText
-              variant="medium"
-              type="title"
-            >
-              Capture Image
-            </StyledText>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.modalList}
-            onPress={pickImage}
-          >
-            <Gallery
-              size={25}
-              color={Colors.primary}
-            />
-            <StyledText
-              variant="medium"
-              type="title"
-            >
-              Select from Gallery
-            </StyledText>
-          </TouchableOpacity>
-        </View>
-      </AppModal>
-
-      <ImageView
-        images={images}
-        imageIndex={documentImage.uri !== "" && 0}
-        visible={visible}
-        onRequestClose={() => setIsVisible(false)}
+      <TabView
+        navigationState={{ index, routes }}
+        renderScene={renderScene}
+        onIndexChange={setIndex}
+        initialLayout={initialLayout}
+        renderTabBar={(props) => (
+          <TabBar
+            {...props}
+            indicatorStyle={{ backgroundColor: Colors.primary }}
+            activeColor={Colors.primary}
+            inactiveColor={Colors.light}
+            style={{ backgroundColor: Colors.white }}
+          />
+        )}
+        style={{ flex: 1, marginTop: 24 }}
       />
-
-      <AppDatePicker
-        isDatePickerVisible={isDatePickerVisible}
-        setDatePickerVisibility={setDatePickerVisibility}
-        setDate={setDob}
-      />
-
-      {verifying && (
-        <View
-          style={{
-            position: "absolute",
-            top: 0,
-            bottom: 0,
-            left: 0,
-            right: 0,
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 10,
-          }}
-        >
-          <View
-            style={{
-              height: 250,
-              width: 250,
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: 10,
-              zIndex: 5,
-            }}
-          >
-            <LottieView
-              loop
-              autoPlay
-              source={require("../../../assets/animations/verifying.json")}
-              style={{ height: 200, width: 200 }}
-            />
-          </View>
-        </View>
-      )}
     </Screen>
   );
 };
@@ -454,6 +480,103 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 12,
+  },
+  loadingContainer: {
+    alignItems: "center",
+    flex: 1,
+    justifyContent: "center",
+  },
+  headerContainer: {
+    marginTop: 20,
+    paddingHorizontal: 16,
+  },
+  documentContainer: {
+    flex: 1,
+    marginTop: 20,
+  },
+  noDocumentsContainer: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  noDocumentsText: {
+    textAlign: "center",
+    color: Colors.primary,
+  },
+  documentTitle: {
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  documentSubtitle: {
+    color: Colors.light,
+    marginBottom: 24,
+    fontSize: 14,
+    textAlign: "center",
+  },
+  documentItem: {
+    marginBottom: 24,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 8,
+    backgroundColor: Colors.white,
+  },
+  documentHeader: {
+    marginBottom: 12,
+  },
+  previewContainer: {
+    marginTop: 8,
+  },
+  previewImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+  },
+  selectedText: {
+    fontSize: 14,
+    color: Colors.primary,
+    marginTop: 4,
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  selectButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    borderRadius: 6,
+    alignItems: "center",
+  },
+  buttonConfirm: {
+    flex: 1,
+    backgroundColor: Colors.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  selectButtonText: {
+    color: Colors.primary,
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  buttonConfirmText: {
+    color: Colors.white,
+  },
+  buttonDisabled: {
+    color: Colors.white,
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  buttonText: {
+    color: Colors.white,
+    fontSize: 14,
+    fontWeight: "500",
   },
 });
 

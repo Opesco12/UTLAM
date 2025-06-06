@@ -149,6 +149,13 @@ const PorfolioDetails = () => {
           >
             {amountFormatter.format(balance)}
           </StyledText>
+          <StyledText
+            type="label"
+            style={{ marginTop: 10 }}
+          >
+            Pending Dividend:{" "}
+            {amountFormatter.format(product?.pendingDividendAmount)}
+          </StyledText>
         </ContentBox>
 
         {!portfolioType && (

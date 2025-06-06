@@ -9,9 +9,7 @@ import {
 } from "react-native";
 import { useState } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import ReactNativeModal from "react-native-modal";
 import { CheckBox } from "@rneui/base";
-
 import { Colors } from "@/src/constants/Colors";
 import StyledText from "./StyledText";
 import AppDivider from "./AppDivider";
@@ -88,43 +86,47 @@ const AppPicker = ({
         </TouchableOpacity>
       </View>
 
-      <ReactNativeModal
-        isVisible={modalVisible}
-        style={styles.modal}
-        swipeThreshold={60}
-        swipeDirection={"down"}
-        onBackdropPress={() => setModalVisible(false)}
-        onSwipeComplete={() => setModalVisible(false)}
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalContent}>
-          <View style={styles.line}></View>
-          <FlatList
-            data={options}
-            renderItem={({ item }) => (
-              <Pressable
-                style={styles.item}
-                onPress={() => {
-                  handleSelect(item);
-                }}
-              >
-                <StyledText
-                  type="title"
-                  variant="medium"
+        <TouchableOpacity
+          style={styles.modal}
+          activeOpacity={1} // Prevents visual feedback on press
+          onPress={() => setModalVisible(false)} // Close modal when backdrop is pressed
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.line}></View>
+            <FlatList
+              data={options}
+              renderItem={({ item }) => (
+                <Pressable
+                  style={styles.item}
+                  onPress={() => {
+                    handleSelect(item);
+                  }}
                 >
-                  {item.label}
-                </StyledText>
-                <CheckBox
-                  checked={
-                    selectedOption && selectedOption.value === item.value
-                  }
-                  onPress={() => handleSelect(item)}
-                />
-              </Pressable>
-            )}
-            ItemSeparatorComponent={() => <AppDivider />}
-          />
-        </View>
-      </ReactNativeModal>
+                  <StyledText
+                    type="title"
+                    variant="medium"
+                  >
+                    {item.label}
+                  </StyledText>
+                  <CheckBox
+                    checked={
+                      selectedOption && selectedOption.value === item.value
+                    }
+                    onPress={() => handleSelect(item)}
+                  />
+                </Pressable>
+              )}
+              ItemSeparatorComponent={() => <AppDivider />}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </>
   );
 };
@@ -144,7 +146,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
   },
-
   item: {
     alignItems: "center",
     flexDirection: "row",
@@ -159,8 +160,9 @@ const styles = StyleSheet.create({
     width: 50,
   },
   modal: {
+    flex: 1,
     justifyContent: "flex-end",
-    margin: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   modalContent: {
     backgroundColor: Colors.white,
@@ -169,15 +171,6 @@ const styles = StyleSheet.create({
     minHeight: 200,
     maxHeight: "90%",
     padding: 20,
-  },
-  modalText: {
-    fontSize: 18,
-    fontWeight: "500",
-  },
-
-  text: {
-    fontSize: 18,
-    fontWeight: "500",
   },
 });
 

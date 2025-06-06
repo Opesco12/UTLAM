@@ -30,14 +30,35 @@ const TransactionDetails = () => {
             type="title"
             variant="medium"
           >
-            {transaction.portfolio}
+            {transaction?.status
+              ? transaction?.referenceNo
+              : transaction.portfolio}
           </StyledText>
+          {transaction?.status && (
+            <StyledText
+              variant="medium"
+              type="label"
+              style={{
+                textAlign: "right",
+                backgroundColor: "#fff9c4",
+                paddingVertical: 2,
+                paddingHorizontal: 3,
+                borderRadius: 8,
+                textAlign: "center",
+              }}
+              color={"#f9a825"}
+            >
+              {transaction?.status}
+            </StyledText>
+          )}
           <StyledText
             type="heading"
             variant="semibold"
             style={{ textAlign: "center", marginVertical: 20 }}
           >
-            {amountFormatter.format(transaction.amount)}
+            {transaction?.status
+              ? amountFormatter.format(transaction?.netAmount)
+              : amountFormatter.format(transaction.amount)}
           </StyledText>
           <StyledText
             type="title"
@@ -45,6 +66,7 @@ const TransactionDetails = () => {
           >
             {transaction.description}
           </StyledText>
+
           <StyledText style={{ marginTop: 25 }}>Date: {date}</StyledText>
         </ContentBox>
       </View>

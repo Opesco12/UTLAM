@@ -9,20 +9,29 @@ import {
   LogoutCurve,
   Profile as ProfileIcon,
   UserOctagon,
+  UserCirlceAdd,
+  Profile2User,
+  Key,
 } from "iconsax-react-native";
+import { Pressable } from "react-native";
 
 import Screen from "@/src/components/Screen";
 import AppHeader from "@/src/components/AppHeader";
 import { Colors } from "@/src/constants/Colors";
 import StyledText from "@/src/components/StyledText";
 import AppListItem from "@/src/components/AppListItem";
+import ProfileImageUploadModal from "@/src/components/ImageUploadModal";
+
 import { retrieveUserData } from "@/src/storage/userData";
-import { logout } from "@/src/api";
-import { Pressable } from "react-native";
+import { logout, fetchClientPhoto } from "@/src/api";
+import { toast } from "sonner-native";
 
 const Profile = () => {
   const [fullname, setFullname] = useState(null);
   const [authToken, setAuthToken] = useState(null);
+  const [profileImage, setProfileImage] = useState(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const logoutUser = async () => {
     const data = await logout(authToken);
@@ -30,14 +39,35 @@ const Profile = () => {
     router.replace("/(auth)/login");
   };
 
+  const handleUpload = async () => {
+    try {
+      if (!selectedImage) {
+        toast.info("Please select an image");
+      } else {
+        const response = await uploadImage(selectedImage);
+        if (response?.message === "Success") {
+          toast.success("Upload Succesful");
+          const profileImage = await fetchClientPhoto();
+          setProfileImage(profileImage?.photo);
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       const userData = await retrieveUserData();
       setFullname(userData?.fullName);
       setAuthToken(userData?.token);
+
+      const profileImage = await fetchClientPhoto();
+      setProfileImage(profileImage?.photo);
     };
     fetchData();
   }, []);
+
   return (
     <Screen>
       <AppHeader />
@@ -63,10 +93,23 @@ const Profile = () => {
             {fullname}
           </StyledText>
         </View>
-        <Image
-          source={require("../../../assets/images/layer.png")}
-          style={{ height: 50, width: 50, borderRadius: 25 }}
-        />
+        {profileImage?.length > 0 ? (
+          <Image
+            src={`data:image/jpeg;base64,${profileImage}`}
+            style={{
+              height: 50,
+              width: 50,
+              borderRadius: 25,
+            }}
+          />
+        ) : (
+          <UserCirlceAdd
+            size={50}
+            color={Colors.light}
+            variant="Bold"
+            onPress={() => setIsModalVisible(true)}
+          />
+        )}
       </View>
 
       <View>
@@ -123,8 +166,25 @@ const Profile = () => {
               KYC
             </AppListItem>
           </Link>
+
           <Link
-            href={"/"}
+            href={"/(app)/Referral"}
+            asChild
+          >
+            <AppListItem
+              leftIcon={
+                <Profile2User
+                  size={20}
+                  color={Colors.primary}
+                />
+              }
+            >
+              Referral
+            </AppListItem>
+          </Link>
+
+          <Link
+            href={"/(app)/contact-manager"}
             asChild
           >
             <AppListItem
@@ -136,6 +196,21 @@ const Profile = () => {
               }
             >
               Contact Account Manager
+            </AppListItem>
+          </Link>
+          <Link
+            href={"/(app)/pin-management"}
+            asChild
+          >
+            <AppListItem
+              leftIcon={
+                <Key
+                  size={20}
+                  color={Colors.primary}
+                />
+              }
+            >
+              Pin Management
             </AppListItem>
           </Link>
           <Link
@@ -153,16 +228,21 @@ const Profile = () => {
               Change Password
             </AppListItem>
           </Link>
-          <AppListItem
-            leftIcon={
-              <Headphone
-                size={20}
-                color={Colors.primary}
-              />
-            }
+          <Link
+            asChild
+            href={"/(app)/support"}
           >
-            Help & Support
-          </AppListItem>
+            <AppListItem
+              leftIcon={
+                <Headphone
+                  size={20}
+                  color={Colors.primary}
+                />
+              }
+            >
+              Help & Support
+            </AppListItem>
+          </Link>
         </View>
       </View>
 
@@ -183,6 +263,13 @@ const Profile = () => {
           </View>
         </Pressable>
       </View>
+      <ProfileImageUploadModal
+        isVisible={isModalVisible}
+        onClose={() => setIsModalVisible(false)}
+        onUpload={handleUpload}
+        selectedImage={selectedImage}
+        setSelectedImage={setSelectedImage}
+      />
     </Screen>
   );
 };

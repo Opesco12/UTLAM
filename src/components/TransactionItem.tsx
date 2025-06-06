@@ -20,13 +20,14 @@ const TransactionItem = ({ transaction }) => {
       }}
     >
       <View style={styles.container}>
-        <View style={{ width: "70%" }}>
+        <View style={{ width: "65%" }}>
           <StyledText
             variant="medium"
             type="body"
             numberOfLines={1}
           >
-            {transaction.description} {"-"} {transaction.portfolio}
+            {transaction.description}{" "}
+            {transaction?.portfolio && "-" + transaction.portfolio}
           </StyledText>
           <StyledText
             type="label"
@@ -35,15 +36,35 @@ const TransactionItem = ({ transaction }) => {
             {transactionDate}
           </StyledText>
         </View>
-
-        <StyledText
-          variant="medium"
-          type="body"
-          style={{ width: "30%", textAlign: "right" }}
-          numberOfLines={1}
-        >
-          {amountFormatter.format(transaction.amount)}
-        </StyledText>
+        <View style={{ width: "35%" }}>
+          <StyledText
+            variant="medium"
+            type="body"
+            style={{ textAlign: "right" }}
+            numberOfLines={1}
+          >
+            {transaction?.status
+              ? amountFormatter.format(transaction?.netAmount)
+              : amountFormatter.format(transaction.amount)}
+          </StyledText>
+          {transaction?.status && (
+            <StyledText
+              variant="medium"
+              type="label"
+              style={{
+                textAlign: "right",
+                backgroundColor: "#fff9c4",
+                paddingVertical: 2,
+                paddingHorizontal: 3,
+                borderRadius: 8,
+                textAlign: "center",
+              }}
+              color={"#f9a825"}
+            >
+              {transaction?.status}
+            </StyledText>
+          )}
+        </View>
       </View>
       <AppDivider />
     </Pressable>

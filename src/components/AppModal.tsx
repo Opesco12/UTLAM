@@ -1,14 +1,15 @@
 import {
   Modal,
   StyleSheet,
-  Text,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
+  TouchableOpacity,
+  Animated,
 } from "react-native";
-import { useState } from "react";
-import ReactNativeModal from "react-native-modal";
-
+import {
+  PanGestureHandler,
+  GestureHandlerRootView,
+} from "react-native-gesture-handler";
+import { useRef } from "react";
 import { Colors } from "@/src/constants/Colors";
 
 const AppModal = ({
@@ -18,36 +19,70 @@ const AppModal = ({
   modalHeight,
   style,
 }) => {
+  const translateY = useRef(new Animated.Value(0)).current;
+
+  const onGestureEvent = Animated.event(
+    [{ nativeEvent: { translationY: translateY } }],
+    { useNativeDriver: true }
+  );
+
+  const onHandlerStateChange = ({ nativeEvent }) => {
+    if (nativeEvent.state === 5) {
+      // State.END
+      if (nativeEvent.translationY > 60) {
+        // Swipe threshold
+        Animated.timing(translateY, {
+          toValue: modalHeight || 300,
+          duration: 200,
+          useNativeDriver: true,
+        }).start(() => setIsModalVisible(false));
+      } else {
+        Animated.spring(translateY, {
+          toValue: 0,
+          useNativeDriver: true,
+        }).start();
+      }
+    }
+  };
+
   return (
-    <ReactNativeModal
-      isVisible={isModalVisible}
-      style={styles.modal}
-      swipeThreshold={60}
-      swipeDirection={"down"}
-      onBackdropPress={() => setIsModalVisible(false)}
-      onSwipeComplete={() => setIsModalVisible(false)}
+    <Modal
+      visible={isModalVisible}
+      animationType="none" // Animation handled by PanGestureHandler
+      transparent={true}
+      onRequestClose={() => setIsModalVisible(false)}
     >
-      <View
-        style={[
-          styles.modalContent,
-          {
-            minHeight: modalHeight ? modalHeight : 300,
-          },
-          style,
-        ]}
-      >
-        <View style={styles.line}></View>
-        {children}
-      </View>
-    </ReactNativeModal>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setIsModalVisible(false)}
+        >
+          <PanGestureHandler
+            onGestureEvent={onGestureEvent}
+            onHandlerStateChange={onHandlerStateChange}
+          >
+            <Animated.View
+              style={[
+                styles.modalContent,
+                {
+                  minHeight: modalHeight ? modalHeight : 300,
+                  transform: [{ translateY }],
+                },
+                style,
+              ]}
+            >
+              <View style={styles.line}></View>
+              {children}
+            </Animated.View>
+          </PanGestureHandler>
+        </TouchableOpacity>
+      </GestureHandlerRootView>
+    </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  modal: {
-    justifyContent: "flex-end",
-    margin: 0,
-  },
   modalOverlay: {
     backgroundColor: "rgba(0,0,0,0.5)",
     flex: 1,
@@ -70,9 +105,6 @@ const styles = StyleSheet.create({
     top: 10,
     position: "absolute",
     zIndex: 1,
-  },
-  text: {
-    fontSize: 16,
   },
 });
 

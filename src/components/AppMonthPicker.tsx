@@ -99,6 +99,9 @@ const AppMonthPicker = ({ isVisible, onClose, onSelectMonthYear }) => {
         </TouchableWithoutFeedback>
         <View style={styles.modalContent}>
           <View style={styles.pickerContainer}>
+            <View style={[styles.selectionLine, { top: ITEM_HEIGHT * 2 }]} />
+            <View style={[styles.selectionLine, { top: ITEM_HEIGHT * 3 }]} />
+
             <ScrollView
               ref={monthScrollViewRef}
               showsVerticalScrollIndicator={false}
@@ -179,12 +182,20 @@ const styles = StyleSheet.create({
   button: {
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: "#007AFF",
+    backgroundColor: Colors.primary,
     borderRadius: 5,
   },
   buttonText: {
     color: "white",
     fontSize: 16,
+  },
+  selectionLine: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    height: 2,
+    backgroundColor: "#d1d1d1",
+    zIndex: 10,
   },
 });
 

@@ -7,13 +7,14 @@ import { Colors } from "@/src/constants/Colors";
 import { useEffect, useState } from "react";
 import TransactionItem from "@/src/components/TransactionItem";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { getTransactions } from "@/src/api";
+import { getPendingWithdrawals, getTransactions } from "@/src/api";
 import Loader from "@/src/components/Loader";
 import AppMonthPicker from "@/src/components/AppMonthPicker";
 
 const Transactions = () => {
   const [loading, setLoading] = useState(false);
   const [transactions, setTransactions] = useState([]);
+  const [pendingWithdrawals, setPendingWithdrawals] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [startdate, setStartdate] = useState(null);
   const [enddate, setEnddate] = useState(null);
@@ -25,14 +26,15 @@ const Transactions = () => {
     var newdate = enddate.split("-", 2);
     const startdate = newdate.join("-") + "-01";
 
-    console.log("Startdate: ", startdate);
-    console.log("Enddate: ", enddate);
-
     setStartdate(startdate);
     setEnddate(enddate);
 
     const transactions = await fetchTransactions(startdate, enddate);
     setTransactions(transactions);
+
+    const pendingWithdrawals = await getPendingWithdrawals();
+    setPendingWithdrawals(pendingWithdrawals);
+
     setLoading(false);
   };
 
@@ -57,10 +59,7 @@ const Transactions = () => {
       "Nov",
       "Dec",
     ];
-
-    // Check if dateString is undefined or null
     if (dateString !== null) {
-      // Parse the input date string
       const parts = dateString.split("-");
       if (parts.length !== 3) {
         throw new Error(
@@ -70,7 +69,6 @@ const Transactions = () => {
 
       const [year, month, day] = parts.map(Number);
 
-      // Check if the date is valid
       if (
         isNaN(year) ||
         isNaN(month) ||
@@ -83,10 +81,8 @@ const Transactions = () => {
         );
       }
 
-      // Get the month abbreviation (subtract 1 from month because array is 0-indexed)
       const monthAbbr = monthAbbreviations[month - 1];
 
-      // Return the formatted string
       return `${monthAbbr} - ${year}`;
     }
   }
@@ -172,13 +168,22 @@ const Transactions = () => {
               />
             </View>
 
-            {transactions?.length > 0 ? (
-              transactions.map((transaction, index) => (
-                <TransactionItem
-                  key={index}
-                  transaction={transaction}
-                />
-              ))
+            {transactions?.length > 0 || pendingWithdrawals?.length > 0 ? (
+              <>
+                {pendingWithdrawals.map((transaction, index) => (
+                  <TransactionItem
+                    key={index}
+                    transaction={transaction}
+                  />
+                ))}
+
+                {transactions.map((transaction, index) => (
+                  <TransactionItem
+                    key={index}
+                    transaction={transaction}
+                  />
+                ))}
+              </>
             ) : (
               <View
                 style={{

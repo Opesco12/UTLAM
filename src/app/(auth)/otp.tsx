@@ -1,25 +1,81 @@
-import { View } from "react-native";
-import { useState } from "react";
+import { View, StyleSheet } from "react-native";
+import { useState, useCallback } from "react";
 import { showMessage } from "react-native-flash-message";
 import { router, useLocalSearchParams } from "expo-router";
+import { toast } from "sonner-native";
 
 import Screen from "@/src/components/Screen";
 import AppHeader from "@/src/components/AppHeader";
 import AppButton from "@/src/components/AppButton";
-import { Colors } from "@/src/constants/Colors";
-import Otp_Input from "@/src/components/Otp_Input";
+import OtpInput from "@/src/components/Otp_Input";
 import StyledText from "@/src/components/StyledText";
-
+import { Colors } from "@/src/constants/Colors";
+import { activateAccount, login2fa, resendActivationCode } from "@/src/api";
 import { storeUserData } from "@/src/storage/userData";
-import { obfuscateEmail } from "../../helperFunctions/obfuscateEmail";
-import { activateAccount, login2fa, resnedActivationCode } from "@/src/api";
+import { obfuscateEmail } from "@/src/helperFunctions/obfuscateEmail";
+import { useAuth } from "@/context/authContext";
 
-const Otp = ({}) => {
-  const { username, header } = useLocalSearchParams();
-  const [code, setCode] = useState(Array(6).fill(""));
+const OTP_LENGTH = 6;
+
+const Otp = () => {
+  const { username, header } = useLocalSearchParams<{
+    username: string;
+    header?: string;
+  }>();
+  const [code, setCode] = useState<string[]>(Array(OTP_LENGTH).fill(""));
   const [isIncorrect, setIsIncorrect] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { setIsAuthenticated } = useAuth();
 
-  const shortenedEmail = username && obfuscateEmail(username);
+  const shortenedEmail = username ? obfuscateEmail(username) : "";
+
+  const handleResendCode = useCallback(async () => {
+    if (!username) return;
+    try {
+      const response = await resendActivationCode({ userName: username });
+      if (response) {
+        showMessage({
+          message: "Security code has been sent to your email",
+          type: "success",
+        });
+      }
+    } catch (error) {
+      showMessage({
+        message: "Failed to resend security code",
+        type: "danger",
+      });
+    }
+  }, [username]);
+
+  const handleSubmit = useCallback(async () => {
+    if (code.join("").length < OTP_LENGTH) return;
+
+    setIsIncorrect(false);
+    const securityCode = code.join("");
+    const data = { username, securityCode };
+
+    try {
+      let response;
+      if (header) {
+        response = await activateAccount(data);
+        if (response) {
+          toast.success("Account activated successfully");
+          router.replace("/login");
+        }
+      } else {
+        response = await login2fa(data);
+        console.log(response);
+        if (response) {
+          toast.success("Login Successful");
+          router.replace("/(tabs)/");
+          setIsAuthenticated(true);
+        }
+      }
+    } catch (error) {
+      setIsIncorrect(true);
+      toast.error("Invalid Security Code");
+    }
+  }, [code, username, header, setIsAuthenticated]);
 
   return (
     <Screen>
@@ -27,31 +83,31 @@ const Otp = ({}) => {
       <StyledText
         type="heading"
         variant="semibold"
-        style={{ marginTop: 25 }}
+        style={styles.header}
       >
-        {header ? header : "OTP Verification"}
+        {header || "OTP Verification"}
       </StyledText>
       <StyledText
         type="body"
         variant="medium"
         color={Colors.light}
       >
-        We have sent a security code to your email address {shortenedEmail}{" "}
+        We have sent a security code to your email address {shortenedEmail}.
         Enter the code below to verify
       </StyledText>
-      <View style={{ marginTop: 25, flex: 1 }}>
-        <Otp_Input
+      <View style={styles.content}>
+        <OtpInput
           code={code}
           setCode={setCode}
           isIncorrect={isIncorrect}
         />
 
         {header && (
-          <View style={{ marginTop: 25, marginBottom: 50 }}>
+          <View style={styles.resendContainer}>
             <StyledText
               type="body"
               variant="medium"
-              style={{ textAlign: "center" }}
+              style={styles.resendText}
             >
               Didn't receive a code?
             </StyledText>
@@ -59,20 +115,8 @@ const Otp = ({}) => {
               color={Colors.lightPrimary}
               type="body"
               variant="medium"
-              style={{
-                marginTop: 10,
-                textAlign: "center",
-              }}
-              onPress={async () => {
-                const data = { userName: username };
-                const response = await resnedActivationCode(data);
-                if (response) {
-                  showMessage({
-                    message: "Security code has been sent to your email",
-                    type: "success",
-                  });
-                }
-              }}
+              style={styles.resendLink}
+              onPress={handleResendCode}
             >
               Resend Security Code
             </StyledText>
@@ -80,47 +124,9 @@ const Otp = ({}) => {
         )}
 
         <AppButton
-          onPress={async () => {
-            if (header) {
-              const data = {
-                username: username,
-                securityCode: `${code.join("")}`,
-              };
-
-              const response = await activateAccount(data);
-              if (response) {
-                showMessage({
-                  message: "Login Succesful",
-                  type: "success",
-                });
-                router.replace("/login");
-              } else {
-                setIsIncorrect(true);
-              }
-            } else {
-              const data = {
-                username: username,
-                securityCode: `${code.join("")}`,
-              };
-
-              const response = await login2fa(data);
-              if (response) {
-                showMessage({
-                  message: "Login Succesful",
-                  type: "success",
-                });
-                console.log(response);
-                storeUserData(response);
-                router.replace("/(tabs)/");
-              } else {
-                setIsIncorrect(true);
-              }
-            }
-          }}
-          customStyles={{
-            display: code.join("").length < 6 ? "none" : "flex",
-            marginTop: 50,
-          }}
+          onPress={handleSubmit}
+          disabled={code.join("").length < OTP_LENGTH}
+          customStyles={styles.button}
         >
           Continue
         </AppButton>
@@ -128,5 +134,30 @@ const Otp = ({}) => {
     </Screen>
   );
 };
+
+const styles = StyleSheet.create({
+  header: {
+    marginTop: 25,
+  },
+  content: {
+    marginTop: 25,
+    flex: 1,
+  },
+  resendContainer: {
+    marginTop: 25,
+    marginBottom: 50,
+    alignItems: "center",
+  },
+  resendText: {
+    textAlign: "center",
+  },
+  resendLink: {
+    marginTop: 10,
+    textAlign: "center",
+  },
+  button: {
+    marginTop: 50,
+  },
+});
 
 export default Otp;

@@ -27,7 +27,6 @@ const Otp_Input = ({
 
         setCode(newCode);
 
-        // Focus on the next empty input or the last input
         const nextEmptyIndex = newCode.findIndex((digit) => digit === "");
         const focusIndex =
           nextEmptyIndex === -1 ? codeLength - 1 : nextEmptyIndex;
@@ -43,7 +42,7 @@ const Otp_Input = ({
   };
 
   const handleLongPress = () => {
-    Alert.alert("Paste OTP", "Do you want to paste the OTP from clipboard?", [
+    Alert.alert("Paste", "Do you want to paste from clipboard?", [
       {
         text: "Cancel",
         style: "cancel",
@@ -53,12 +52,15 @@ const Otp_Input = ({
   };
 
   const handleChange = (text, index) => {
+    if (text && !/^\d$/.test(text)) {
+      return;
+    }
     const newCode = [...code];
     newCode[index] = text;
     setCode(newCode);
 
     if (text && index < codeLength - 1) {
-      inputRefs.current[index + 1].focus();
+      inputRefs.current[index + 1]?.focus();
     }
 
     if (newCode.every((digit) => digit !== "")) {
@@ -76,6 +78,7 @@ const Otp_Input = ({
     <View style={styles.container}>
       {code.map((digit, index) => (
         <TextInput
+          secureTextEntry
           key={index}
           ref={(ref) => (inputRefs.current[index] = ref)}
           style={[

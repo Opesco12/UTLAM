@@ -1,5 +1,7 @@
+import * as Clipboard from "expo-clipboard";
+import { toast } from "sonner-native";
+
 export const copyToClipboard = async (text) => {
   await Clipboard.setStringAsync(text);
-  setIsDepositModalOpen(false);
-  showMessage({ message: "Copied", type: "success" });
+  toast.success("copied");
 };

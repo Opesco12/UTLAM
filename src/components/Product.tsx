@@ -9,6 +9,7 @@ import { Colors } from "@/src/constants/Colors";
 import StyledText from "./StyledText";
 import AppDivider from "./AppDivider";
 import { showMessage } from "react-native-flash-message";
+import { amountFormatter } from "../helperFunctions/amountFormatter";
 
 const Product = React.forwardRef(({ onPress, product }, ref) => {
   function convertToKebabCase(inputString) {
@@ -89,7 +90,9 @@ const Product = React.forwardRef(({ onPress, product }, ref) => {
                     type="label"
                     variant="semibold"
                   >
-                    From ₦{product && product.minimumInvestment}
+                    From{" "}
+                    {product &&
+                      amountFormatter.format(product.minimumInvestment)}
                   </StyledText>
                 </StyledText>
               </View>

@@ -2,11 +2,17 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { endpoints } from "./endpoints";
 import keys from "../storage/keys";
-import { retrieveUserData } from "../storage/userData";
+import {
+  clearUserData,
+  retrieveUserData,
+  storeUserData,
+} from "../storage/userData";
 import { showMessage } from "react-native-flash-message";
 import { Redirect, router } from "expo-router";
+import { toast } from "sonner-native";
 
-const BASE_URL = "https://utl-proxy.vercel.app/api/v1";
+// const BASE_URL = "https://utl-proxy.vercel.app/api/v1";
+const BASE_URL = "https://xfundclientapi.utlam.com:1008/api/v1";
 
 const getAuthToken = async () => {
   const data = await retrieveUserData();
@@ -55,9 +61,12 @@ const apiCall = async ({
     const response = await axiosInstance(config);
     return response.data;
   } catch (error) {
+    console.log(error.response.data);
     console.error("API call error:", error);
     console.log(typeof error.status);
     if (error.status === 401) {
+      toast.error("Your session expired. Please log in again.");
+      await clearUserData();
       return router.replace("/(auth)/login");
     }
     throw error;
@@ -102,6 +111,24 @@ export const registerNewIndividual = async (info) => {
         message: "Please try again later",
         type: "warning",
       });
+    }
+  }
+};
+
+export const registerExistingIndividual = async (info) => {
+  try {
+    const data = await apiCall({
+      method: "POST",
+      endpoint: endpoints.RegisterExistingIndividual,
+      data: info,
+      requiresAuth: false,
+    });
+    return data;
+  } catch (error) {
+    if (error.status === 400) {
+      toast.error("Invalid Details or account already exists");
+    } else {
+      toast.error("An error occurred");
     }
   }
 };
@@ -168,15 +195,9 @@ export const login = async (username, password) => {
   } catch (error) {
     console.log(error);
     if (error.status === 400) {
-      showMessage({
-        message: "Incorrect Email or password",
-        type: "danger",
-      });
+      toast.error("Incorrect Email or Password");
     } else {
-      showMessage({
-        message: "Please try again later",
-        type: "warning",
-      });
+      toast.error("Please try again later");
     }
   }
 };
@@ -189,19 +210,14 @@ export const login2fa = async (info) => {
       data: info,
       requiresAuth: false,
     });
+    await storeUserData(data);
     return data;
   } catch (error) {
     console.log(error);
     if (err.status === 400) {
-      showMessage({
-        message: "Incorrect Security Code",
-        type: "danger",
-      });
+      toast.error("Incorrect Security Code");
     } else {
-      showMessage({
-        message: "Please try again later",
-        type: "warning",
-      });
+      toast.error("Please try again later");
     }
   }
 };
@@ -581,9 +597,264 @@ export const fixedIncomeRedemptionOrder = async (referenceNo, amount) => {
     return data;
   } catch (error) {
     console.log(error);
-    showMessage({
-      message: "An error occured while processing fund withdrawal",
-      type: "warning",
+    toast.error("An error occured while processing fund redemption");
+  }
+};
+
+export const hasTransactionPin = async () => {
+  try {
+    const data = await apiCall({
+      endpoint: endpoints.hasTransactionPin,
+      method: "GET",
     });
+    return data;
+  } catch (error) {
+    toast.error("An error occurred");
+  }
+};
+
+export const createTransactionPin = async (requestData) => {
+  try {
+    const data = await apiCall({
+      endpoint: endpoints.createPin,
+      method: "POST",
+      data: requestData,
+    });
+    return data;
+  } catch (error) {
+    toast.error("An error occurred");
+  }
+};
+
+export const changeTransactionPin = async (requestData) => {
+  try {
+    console.log("From endpoints: ", requestData);
+    const data = await apiCall({
+      endpoint: endpoints.changePin,
+      method: "POST",
+      data: requestData,
+    });
+    return data;
+  } catch (error) {
+    toast.error("An error occurred");
+  }
+};
+
+export const resetTransactionPinRequest = async (username) => {
+  try {
+    const data = await apiCall({
+      endpoint: `${endpoints.resetPinRequest}?username=${username}`,
+      method: "POST",
+    });
+
+    return data;
+  } catch (error) {
+    toast.error("An error occurred");
+  }
+};
+
+export const resetTransactionPin = async (requestData) => {
+  try {
+    const data = await apiCall({
+      endpoint: endpoints.resetPin,
+      method: "POST",
+      data: requestData,
+    });
+    return data;
+  } catch (error) {
+    toast.error("An error occurred");
+  }
+};
+
+export const sendMessageToClientManager = async (message) => {
+  try {
+    const data = await apiCall({
+      endpoint: endpoints.sendMessageToClientManager,
+      method: "POST",
+      data: { message: message },
+    });
+    return data;
+  } catch (error) {
+    if (!(error instanceof AuthenticationError)) {
+      toast.error("An error occurred");
+    }
+    return null;
+  }
+};
+
+export const updateClientInfo = async (info) => {
+  try {
+    const data = await apiCall({
+      endpoint: endpoints.UpdateClientInfo,
+      method: "POST",
+      data: info,
+    });
+    return data;
+  } catch (error) {
+    console.error(error.message);
+    toast.error("An error occured");
+  }
+};
+
+export const getBanks = async () => {
+  try {
+    const data = await apiCall({
+      endpoint: endpoints.getBanks,
+      method: "GET",
+    });
+    return data;
+  } catch (error) {
+    toast.error("An error occurred");
+  }
+};
+
+export const createClientBank = async (requestData) => {
+  try {
+    const data = await apiCall({
+      endpoint: endpoints.createBank,
+      method: "POST",
+      data: requestData,
+    });
+    return data;
+  } catch (error) {
+    toast.error(error?.response?.data?.Message);
+  }
+};
+
+export const getClientBankAccounts = async () => {
+  try {
+    const data = await apiCall({
+      endpoint: endpoints.getClientBanks,
+      method: "GET",
+    });
+    return data;
+  } catch (error) {
+    toast.error("Unable to fetch client bank accounts");
+  }
+};
+
+export const debitWallet = async (requestData) => {
+  try {
+    const data = await apiCall({
+      endpoint: endpoints.withdraw,
+      method: "POST",
+      data: requestData,
+    });
+    return data;
+  } catch (error) {
+    if (error.status === 400) {
+      toast.error("Incorrect pin");
+    } else {
+      toast.error("An error occurred while processing fund withdrawal");
+    }
+  }
+};
+
+export const getPendingWithdrawals = async () => {
+  try {
+    const data = await apiCall({
+      endpoint: endpoints.getPendingWithdrawals,
+      method: "GET",
+    });
+    return data;
+  } catch (error) {
+    toast.error("An error occurred");
+  }
+};
+
+export const getPendingDocuments = async () => {
+  try {
+    const data = await apiCall({
+      endpoint: endpoints.getPendingDocuments,
+      method: "GET",
+    });
+    return data;
+  } catch (error) {
+    toast.error("An error occured while fetching photo");
+  }
+};
+export const uploadClientDocument = async (file, documentId, comment) => {
+  try {
+    const formData = new FormData();
+
+    formData.append("Files", file);
+
+    formData.append("DocumentId", documentId);
+
+    if (comment) {
+      formData.append("Comment", comment);
+    }
+
+    const token = await getAuthToken();
+
+    const response = await axios.post(
+      `${BASE_URL}/${endpoints.uploadClientDocument}`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    toast.success("Document uploaded successfully");
+    return response.data;
+  } catch (error) {
+    console.log(error.message);
+    toast.error("Document upload failed");
+    throw error;
+  }
+};
+
+export const fetchClientPhoto = async () => {
+  try {
+    const data = await apiCall({
+      endpoint: endpoints.getClientPhoto,
+      method: "GET",
+    });
+    return data;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const uploadImage = async (file) => {
+  try {
+    let base64String = file.base64;
+    if (base64String.length > 1000000) {
+      base64String = base64String.substring(0, base64String.length / 2);
+    }
+
+    const requestBody = {
+      base64: file?.base64,
+      filename: file?.fileName || `image_${Date.now()}.jpg`,
+    };
+
+    const token = await getAuthToken();
+
+    const response = await fetch(`${BASE_URL}/${endpoints.uploadClientPhoto}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    // Check response status
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Upload failed:", errorText);
+      throw new Error(`Upload failed: ${response.status}`);
+    }
+
+    // Parse and return response data
+    const responseData = await response.json();
+    return responseData;
+  } catch (error) {
+    console.error("Upload error:", error);
+    showMessage({ message: "Upload Failed!", type: "warning" });
+    throw error;
   }
 };

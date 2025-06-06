@@ -5,10 +5,12 @@ import { StatusBar } from "expo-status-bar";
 
 import StyledText from "@/src/components/StyledText";
 import { Colors } from "@/src/constants/Colors";
+import { ChatProvider } from "@/context/chatContext";
+import TawkToChat from "@/src/components/AppChatbox";
 
 export default function TabLayout() {
   return (
-    <>
+    <ChatProvider>
       <StatusBar style="light" />
       <Tabs
         screenOptions={{
@@ -107,6 +109,7 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
-    </>
+      <TawkToChat />
+    </ChatProvider>
   );
 }

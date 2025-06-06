@@ -63,7 +63,7 @@ const Login = () => {
             if (response) {
               setSubmitting(false);
               resetForm();
-              router.replace({
+              router.push({
                 pathname: "/otp",
                 params: { username: email },
               });
@@ -111,7 +111,10 @@ const Login = () => {
               >
                 <AppButton onPress={handleSubmit}>
                   {isSubmitting ? (
-                    <ActivityIndicator size={"small"} />
+                    <ActivityIndicator
+                      color={Colors.white}
+                      size={"small"}
+                    />
                   ) : (
                     "Login"
                   )}

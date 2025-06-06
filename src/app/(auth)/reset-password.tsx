@@ -10,7 +10,6 @@ import AppTextField from "@/src/components/AppTextField";
 import AppButton from "@/src/components/AppButton";
 import { Colors } from "@/src/constants/Colors";
 
-import { passwordResetSchema } from "../../validationSchemas";
 import { resetPassword, resetPasswordRequest } from "@/src/api";
 import { router } from "expo-router";
 import { showMessage } from "react-native-flash-message";
@@ -181,7 +180,6 @@ const ResetPassword = () => {
   );
 };
 
-// define your styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,

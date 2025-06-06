@@ -6,11 +6,11 @@ import StyledText from "./StyledText";
 import React from "react";
 
 const MediumBox = React.forwardRef(
-  ({ title, subtitle, icon, onPress }, ref) => {
+  ({ title, subtitle, icon, onPress, style }, ref) => {
     return (
       <Pressable
         ref={ref}
-        style={styles.container}
+        style={[styles.container, style]}
         onPress={onPress}
       >
         <View>
