@@ -1,9 +1,9 @@
-import { ActivityIndicator, Image, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { Switch } from "@rneui/base";
 import { useState } from "react";
 import { showMessage } from "react-native-flash-message";
-import { Entypo } from "@expo/vector-icons";
 import LottieView from "lottie-react-native";
+import { router, useLocalSearchParams } from "expo-router";
 
 import LayeredScreen from "@/src/components/LayeredScreen";
 import ContentBox from "@/src/components/ContentBox";
@@ -11,7 +11,6 @@ import AppDivider from "@/src/components/AppDivider";
 import { Colors } from "@/src/constants/Colors";
 import AppButton from "@/src/components/AppButton";
 import StyledText from "@/src/components/StyledText";
-import { router, useLocalSearchParams } from "expo-router";
 import { amountFormatter } from "@/src/helperFunctions/amountFormatter";
 
 import {
@@ -92,15 +91,13 @@ const ConfirmInvestment = ({ route }) => {
               >
                 Amount
               </StyledText>
-              <Text
-                style={{
-                  color: Colors.primary,
-                  fontWeight: "600",
-                  fontSize: 22,
-                }}
+              <StyledText
+                color={Colors.primary}
+                type="subheading"
+                variant="semibold"
               >
                 {amount && amountFormatter.format(amount)}
-              </Text>
+              </StyledText>
             </View>
             <AppDivider />
             <View
@@ -117,15 +114,13 @@ const ConfirmInvestment = ({ route }) => {
               >
                 Management Fee(2%)
               </StyledText>
-              <Text
-                style={{
-                  color: Colors.primary,
-                  fontWeight: "600",
-                  fontSize: 22,
-                }}
+              <StyledText
+                color={Colors.primary}
+                type="subheading"
+                variant="semibold"
               >
                 {amountFormatter.format(0)}
-              </Text>
+              </StyledText>
             </View>
 
             <AppDivider />
@@ -144,15 +139,13 @@ const ConfirmInvestment = ({ route }) => {
               >
                 Total Due
               </StyledText>
-              <Text
-                style={{
-                  color: Colors.primary,
-                  fontWeight: "600",
-                  fontSize: 22,
-                }}
+              <StyledText
+                color={Colors.primary}
+                type="subheading"
+                variant="semibold"
               >
                 {amount && amountFormatter.format(Number(amount) + 0)}
-              </Text>
+              </StyledText>
             </View>
           </ContentBox>
 

@@ -1,15 +1,17 @@
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, Text, Dimensions } from "react-native";
+import { useEffect, useState } from "react";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { TabView, SceneMap, TabBar } from "react-native-tab-view";
 
 import Screen from "@/src/components/Screen";
 import AppHeader from "@/src/components/AppHeader";
 import StyledText from "@/src/components/StyledText";
 import { Colors } from "@/src/constants/Colors";
-import { useEffect, useState } from "react";
 import TransactionItem from "@/src/components/TransactionItem";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { getPendingWithdrawals, getTransactions } from "@/src/api";
 import Loader from "@/src/components/Loader";
 import AppMonthPicker from "@/src/components/AppMonthPicker";
+
+import { getPendingWithdrawals, getTransactions } from "@/src/api";
 
 const Transactions = () => {
   const [loading, setLoading] = useState(false);
@@ -18,6 +20,13 @@ const Transactions = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [startdate, setStartdate] = useState(null);
   const [enddate, setEnddate] = useState(null);
+  const [index, setIndex] = useState(0);
+  const [routes] = useState([
+    { key: "transactions", title: "Transaction History" },
+    { key: "pending", title: "Pending Withdrawals" },
+  ]);
+
+  const initialLayout = { width: Dimensions.get("window").width };
 
   const fetchData = async () => {
     setLoading(true);
@@ -132,20 +141,10 @@ const Transactions = () => {
       end: formatDate(endDate),
     };
   }
-  useEffect(() => {
-    fetchData();
-  }, []);
-  return (
-    <>
-      <Screen>
-        <AppHeader />
-        <StyledText
-          type="heading"
-          variant="semibold"
-          style={{ marginVertical: 25 }}
-        >
-          Transactions
-        </StyledText>
+
+  const TransactionHistory = () => {
+    return (
+      <View style={{ flex: 1, paddingTop: 20 }}>
         {loading ? (
           <Loader />
         ) : (
@@ -168,15 +167,8 @@ const Transactions = () => {
               />
             </View>
 
-            {transactions?.length > 0 || pendingWithdrawals?.length > 0 ? (
+            {transactions?.length > 0 ? (
               <>
-                {pendingWithdrawals.map((transaction, index) => (
-                  <TransactionItem
-                    key={index}
-                    transaction={transaction}
-                  />
-                ))}
-
                 {transactions.map((transaction, index) => (
                   <TransactionItem
                     key={index}
@@ -197,25 +189,92 @@ const Transactions = () => {
                 </StyledText>
               </View>
             )}
+            <AppMonthPicker
+              isVisible={isModalVisible}
+              onClose={() => setIsModalVisible(false)}
+              onSelectMonthYear={async (month, year) => {
+                setLoading(true);
+                const { start, end } = monthToDateRange(`${month} ${year}`);
+                setStartdate(start);
+                setEnddate(end);
+                try {
+                  const transactions = await fetchTransactions(start, end);
+                  setTransactions(transactions);
+                } finally {
+                  setLoading(false);
+                }
+              }}
+            />
           </>
         )}
+      </View>
+    );
+  };
+
+  const PendingTransactions = () => {
+    return (
+      <View style={{ marginTop: 20 }}>
+        {pendingWithdrawals?.length > 0 ? (
+          pendingWithdrawals.map((transaction, index) => (
+            <TransactionItem
+              key={index}
+              transaction={transaction}
+            />
+          ))
+        ) : (
+          <View
+            style={{
+              flex: 1,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <StyledText color={Colors.light}>
+              Your transactions will appear here
+            </StyledText>
+          </View>
+        )}
+      </View>
+    );
+  };
+
+  const renderScene = SceneMap({
+    transactions: TransactionHistory,
+    pending: PendingTransactions,
+  });
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+  return (
+    <>
+      <Screen>
+        <AppHeader />
+        <StyledText
+          type="heading"
+          variant="semibold"
+          style={{ marginTop: 25 }}
+        >
+          Transactions
+        </StyledText>
+
+        <TabView
+          navigationState={{ index, routes }}
+          renderScene={renderScene}
+          onIndexChange={setIndex}
+          initialLayout={initialLayout}
+          renderTabBar={(props) => (
+            <TabBar
+              {...props}
+              indicatorStyle={{ backgroundColor: Colors.primary }}
+              activeColor={Colors.primary}
+              inactiveColor={Colors.light}
+              style={{ backgroundColor: Colors.white }}
+            />
+          )}
+          style={{ flex: 1, marginTop: 15 }}
+        />
       </Screen>
-      <AppMonthPicker
-        isVisible={isModalVisible}
-        onClose={() => setIsModalVisible(false)}
-        onSelectMonthYear={async (month, year) => {
-          setLoading(true);
-          const { start, end } = monthToDateRange(`${month} ${year}`);
-          setStartdate(start);
-          setEnddate(end);
-          try {
-            const transactions = await fetchTransactions(start, end);
-            setTransactions(transactions);
-          } finally {
-            setLoading(false);
-          }
-        }}
-      />
     </>
   );
 };

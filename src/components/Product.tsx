@@ -1,14 +1,11 @@
 import React from "react";
-import { StyleSheet, Text, Pressable, View, Image } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { StyleSheet, Pressable, View, Image } from "react-native";
 import { Moneys, Calendar2 } from "iconsax-react-native";
-import axios from "axios";
 import { router } from "expo-router";
 
 import { Colors } from "@/src/constants/Colors";
 import StyledText from "./StyledText";
 import AppDivider from "./AppDivider";
-import { showMessage } from "react-native-flash-message";
 import { amountFormatter } from "../helperFunctions/amountFormatter";
 
 const Product = React.forwardRef(({ onPress, product }, ref) => {

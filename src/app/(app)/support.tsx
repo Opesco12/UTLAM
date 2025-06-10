@@ -1,4 +1,4 @@
-import { View, Text } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { Call, Copy, CopySuccess, Message } from "iconsax-react-native";
 
 import AppHeader from "@/src/components/AppHeader";
@@ -32,20 +32,20 @@ const Support = () => {
     <Screen>
       <AppHeader />
 
-      <View style={{ marginTop: 20 }}>
-        <StyledText
-          type="heading"
-          variant="semibold"
-        >
-          Help & Support
-        </StyledText>
+      <StyledText
+        type="heading"
+        variant="semibold"
+        style={{ marginTop: 20 }}
+      >
+        Help & Support
+      </StyledText>
 
+      <View style={styles.container}>
         <View
           style={{
             flexDirection: "row",
             alignItems: "center",
             gap: 5,
-            marginTop: 30,
           }}
         >
           <StyledText
@@ -73,6 +73,7 @@ const Support = () => {
           style={{
             flexDirection: "row",
             alignItems: "center",
+            flexWrap: "wrap",
             gap: 5,
             marginTop: 20,
           }}
@@ -101,5 +102,17 @@ const Support = () => {
     </Screen>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    marginTop: 30,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    // paddingHorizontal: 15,
+    // paddingVertical: 10,
+    padding: 15,
+    borderRadius: 6,
+  },
+});
 
 export default Support;

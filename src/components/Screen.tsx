@@ -67,7 +67,6 @@ const Screen = ({
                       onRefresh={onRefresh}
                     />
                   }
-                  // keyboardShouldPersistTaps="handled"
                 >
                   {children}
                 </ScrollView>

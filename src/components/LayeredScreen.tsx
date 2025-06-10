@@ -7,18 +7,15 @@ import {
   ScrollView,
   StyleSheet,
   ImageBackground,
-  ActivityIndicator,
+  KeyboardAvoidingView,
 } from "react-native";
 
 import { useNavigation } from "@react-navigation/native";
 
 import Screen from "./Screen";
 import { Colors } from "@/src/constants/Colors";
-import { Children } from "react";
 import StyledText from "./StyledText";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-
-import Layer from "../../assets/images/svg_images/Layer.js";
 
 const LayeredScreen = ({
   children,
@@ -103,58 +100,64 @@ const LayeredScreen = ({
         </>
       ) : (
         <View style={{ flex: 1 }}>
-          <ScrollView
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
             style={{ flex: 1 }}
-            contentContainerStyle={{ flexGrow: 1 }}
-            showsVerticalScrollIndicator={false}
           >
-            <ImageBackground
-              source={
-                headerImageUrl && headerImageUrl !== null
-                  ? { uri: headerImageUrl }
-                  : require("../../assets/images/layer.png")
-              }
-              style={styles.imageBg}
+            <ScrollView
+              style={{ flex: 1 }}
+              contentContainerStyle={{ flexGrow: 1 }}
+              showsVerticalScrollIndicator={false}
             >
-              {overlay ? (
-                <SafeAreaView style={styles.overlay}>
-                  <MaterialCommunityIcons
-                    name="chevron-left"
-                    color={Colors.white}
-                    size={35}
-                    style={styles.backButton}
-                    onPress={() => navigation.goBack()}
-                  />
-                  <StyledText
-                    color={Colors.white}
-                    type="heading"
-                    variant="semibold"
-                    style={{ textAlign: "center", marginBottom: 10 }}
-                  >
-                    {headerText}
-                  </StyledText>
-                </SafeAreaView>
-              ) : (
-                <SafeAreaView>
-                  {headerText && (
-                    <Image
-                      source={require("../../assets/images/logo_white.png")}
-                      style={{ alignSelf: "center" }}
+              <ImageBackground
+                source={
+                  headerImageUrl && headerImageUrl !== null
+                    ? { uri: headerImageUrl }
+                    : require("../../assets/images/layer.png")
+                }
+                style={styles.imageBg}
+              >
+                {overlay ? (
+                  <SafeAreaView style={styles.overlay}>
+                    <MaterialCommunityIcons
+                      name="chevron-left"
+                      color={Colors.white}
+                      size={35}
+                      style={styles.backButton}
+                      onPress={() => navigation.goBack()}
                     />
-                  )}
-                  <StyledText
-                    color={Colors.white}
-                    type="heading"
-                    variant="semibold"
-                    style={{ textAlign: "center" }}
-                  >
-                    {headerText}
-                  </StyledText>
-                </SafeAreaView>
-              )}
-            </ImageBackground>
-            {children}
-          </ScrollView>
+                    <StyledText
+                      color={Colors.white}
+                      type="heading"
+                      variant="semibold"
+                      style={{ textAlign: "center", marginBottom: 10 }}
+                    >
+                      {headerText}
+                    </StyledText>
+                  </SafeAreaView>
+                ) : (
+                  <SafeAreaView>
+                    {headerText && (
+                      <Image
+                        source={require("../../assets/images/logo_white.png")}
+                        style={{ alignSelf: "center" }}
+                      />
+                    )}
+                    <StyledText
+                      color={Colors.white}
+                      type="heading"
+                      variant="semibold"
+                      style={{ textAlign: "center" }}
+                    >
+                      {headerText}
+                    </StyledText>
+                  </SafeAreaView>
+                )}
+              </ImageBackground>
+              {children}
+            </ScrollView>
+          </KeyboardAvoidingView>
         </View>
       )}
     </>

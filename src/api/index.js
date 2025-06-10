@@ -83,10 +83,7 @@ export const getCountries = async () => {
     return data;
   } catch (error) {
     console.log(error);
-    showMessage({
-      message: "Unable to fetch countries",
-      type: "warning",
-    });
+    toast.error("Unable to fetch countries");
   }
 };
 
@@ -102,15 +99,11 @@ export const registerNewIndividual = async (info) => {
   } catch (error) {
     console.log(error);
     if (err.status === 400) {
-      showMessage({
-        message: `Email address ${email} or phone number has been used or is not available`,
-        type: "warning",
-      });
+      toast.error(
+        `Email address ${data?.email} or phone number has been used or is not available`
+      );
     } else {
-      showMessage({
-        message: "Please try again later",
-        type: "warning",
-      });
+      toast.error("Please try again later");
     }
   }
 };
@@ -142,10 +135,7 @@ export const getClientInfo = async () => {
     return data;
   } catch (error) {
     console.log(error);
-    showMessage({
-      message: "An error occured while trying to fetch info",
-      type: "warning",
-    });
+    toast.error("An error occured");
   }
 };
 
@@ -158,10 +148,7 @@ export const getNextOfKins = async () => {
     return data;
   } catch (error) {
     console.log(error);
-    showMessage({
-      message: "An error occured while trying to fetch info",
-      type: "warning",
-    });
+    toast.error("An error occured");
   }
 };
 
@@ -176,10 +163,7 @@ export const createNextOfKin = async (info) => {
     return data;
   } catch (error) {
     console.log(error);
-    showMessage({
-      message: "An error occured",
-      type: "warning",
-    });
+    toast.error("An error occured");
   }
 };
 
@@ -235,15 +219,9 @@ export const activateAccount = async (info) => {
     console.log(error);
     if (error.status === 400) {
       setIsIncorrect(true);
-      showMessage({
-        message: "Incorrect Security Code",
-        type: "danger",
-      });
+      toast.error("Incorrect Security Code");
     } else {
-      showMessage({
-        message: "Please try again later",
-        type: "warning",
-      });
+      toast.error("Please try again later");
     }
   }
 };
@@ -260,15 +238,9 @@ export const resnedActivationCode = async (info) => {
   } catch (error) {
     console.log(error);
     if (error.status === 400) {
-      showMessage({
-        message: "Incorrect Security Code",
-        type: "danger",
-      });
+      toast.error("Incorred Security code");
     } else {
-      showMessage({
-        message: "Please try again later",
-        type: "warning",
-      });
+      toast.error("An errir occured");
     }
   }
 };
@@ -295,12 +267,9 @@ export const changePassword = async (oldPassword, newPassword) => {
   } catch (error) {
     console.log(error);
     if (error.status === 400) {
-      showMessage({
-        message: "Please input your correct password",
-        type: "warning",
-      });
+      toast.error("Incorrect Password");
     } else {
-      showMessage({ message: "Unable to change password", type: "warning" });
+      toast.error("An error occured");
     }
   }
 };
@@ -315,12 +284,9 @@ export const resetPasswordRequest = async (email) => {
     return data;
   } catch (error) {
     if (error.status === 400) {
-      showMessage({
-        message: "Please input a registered email address",
-        type: "warning",
-      });
+      toast.error("Please input a registered email address");
     } else {
-      showMessage({ message: "An error occured", type: "danger" });
+      toast.error("An error occured");
     }
   }
 };
@@ -335,15 +301,9 @@ export const resetPassword = async (token, password) => {
     return data;
   } catch (error) {
     if (error.status === 400) {
-      showMessage({
-        message: "An error occured, Please confirm that the token is correct",
-        type: "warning",
-      });
+      toast.error("Incorrect token");
     } else {
-      showMessage({
-        message: "An error occured",
-        type: "warning",
-      });
+      toast.error("An error occured");
     }
   }
 };
@@ -358,10 +318,7 @@ export const getWalletBalance = async () => {
     return data;
   } catch (error) {
     console.log(error);
-    showMessage({
-      message: "Unable to fetch wallet balance",
-      type: "warning",
-    });
+    toast.error("An error occured");
   }
 };
 
@@ -375,10 +332,7 @@ export const getProducts = async () => {
     return data;
   } catch (error) {
     console.log(error);
-    showMessage({
-      message: "An error occured",
-      type: "warning",
-    });
+    toast.error("An error occured");
   }
 };
 
@@ -390,10 +344,7 @@ export const getVirtualAccounts = async () => {
     });
     return data;
   } catch (error) {
-    showMessage({
-      message: "Unable to fetch virtual accounts",
-      type: "warning",
-    });
+    toast.error("An error occured");
   }
 };
 
@@ -405,10 +356,7 @@ export const getClientPortfolio = async () => {
     });
     return data;
   } catch (error) {
-    showMessage({
-      message: "Unable to fetch portfolio",
-      type: "warning",
-    });
+    toast.error("An error occured");
   }
 };
 
@@ -420,10 +368,7 @@ export const getMutualFundOnlineBalances = async () => {
     });
     return data;
   } catch (error) {
-    showMessage({
-      message: "Unable to fetch data",
-      type: "warning",
-    });
+    toast.error("An error occured");
   }
 };
 
@@ -436,6 +381,7 @@ export const getMutualFundOnlineBalance = async (portfolioId) => {
     return data;
   } catch (error) {
     console.log(error);
+    toast.error("An error occured");
   }
 };
 
@@ -449,10 +395,7 @@ export const getMutualFundStatement = async (portfolioId) => {
     return data;
   } catch (err) {
     console.log(err);
-    showMessage({
-      message: "Unable to fetch statement",
-      type: "warning",
-    });
+    toast.error("An error occured");
   }
 };
 
@@ -464,10 +407,7 @@ export const getTransactions = async (startdate, enddate) => {
     });
     return data;
   } catch (error) {
-    showMessage({
-      message: "Unable to fetch transactions",
-      type: "warning",
-    });
+    toast.error("An error occured");
   }
 };
 
@@ -490,11 +430,7 @@ export const mutualFundSubscription = async ({
       console.log("The request gave back: ", data);
       return data;
     } catch (error) {
-      console.log(error);
-      showMessage({
-        message: "An error occured",
-        type: "warning",
-      });
+      toast.error("An error occured");
     }
   }
 };
@@ -514,10 +450,7 @@ export const mutualfundRedemption = async (accountNo, amount) => {
     return data;
   } catch (err) {
     console.log(err);
-    showMessage({
-      message: "An error occured while processing fund withdrawal",
-      type: "warning",
-    });
+    toast.error("An error occured");
   }
 };
 
@@ -530,7 +463,7 @@ export const getFixedIcomeOnlineBalances = async (portfolioId) => {
     return data;
   } catch (error) {
     console.log(error);
-    showMessage({ message: "An error occured", type: "warning" });
+    toast.error("An error occured");
   }
 };
 
@@ -543,6 +476,7 @@ export const getLiabilityProducts = async (portfolioId) => {
     return data;
   } catch (err) {
     console.log(err);
+    toast.error("An error occured");
   }
 };
 
@@ -555,6 +489,7 @@ export const getTenor = async (productId) => {
     return data;
   } catch (error) {
     console.log(error);
+    toast.error("An error occured");
   }
 };
 
@@ -854,7 +789,7 @@ export const uploadImage = async (file) => {
     return responseData;
   } catch (error) {
     console.error("Upload error:", error);
-    showMessage({ message: "Upload Failed!", type: "warning" });
+    toast.error("An error occured");
     throw error;
   }
 };

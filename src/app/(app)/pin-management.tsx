@@ -6,8 +6,10 @@ import {
   StyleSheet,
   ActivityIndicator,
   TextInput,
+  Pressable,
 } from "react-native";
 import { toast } from "sonner-native";
+import { Key, Lock } from "iconsax-react-native";
 
 import { Colors } from "@/src/constants/Colors";
 import AppHeader from "@/src/components/AppHeader";
@@ -24,6 +26,7 @@ import {
   resetTransactionPin,
   resetTransactionPinRequest,
 } from "../../api/index";
+import AppListItem from "@/src/components/AppListItem";
 
 const PinManagement = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -278,33 +281,32 @@ const PinManagement = () => {
         <View style={styles.menuContainer}>
           {userHasTransactionPin && (
             <>
-              <TouchableOpacity
-                style={styles.menuItem}
+              <AppListItem
                 onPress={() => {
                   setActiveSection("change");
                   setIsMenuHidden(true);
                 }}
+                leftIcon={
+                  <Lock
+                    size={20}
+                    color={Colors.primary}
+                  />
+                }
               >
-                <StyledText
-                  type="title"
-                  variant="medium"
-                  color={Colors.primary}
-                >
-                  Change PIN
-                </StyledText>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.menuItem}
+                Change PIN
+              </AppListItem>
+
+              <AppListItem
                 onPress={handleResetPin}
+                leftIcon={
+                  <Lock
+                    size={20}
+                    color={Colors.primary}
+                  />
+                }
               >
-                <StyledText
-                  type="title"
-                  variant="medium"
-                  color={Colors.primary}
-                >
-                  Reset PIN
-                </StyledText>
-              </TouchableOpacity>
+                Reset PIN
+              </AppListItem>
             </>
           )}
         </View>
@@ -512,7 +514,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   menuContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
     marginBottom: 20,
   },
   menuItem: {

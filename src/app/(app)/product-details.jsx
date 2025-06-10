@@ -8,6 +8,7 @@ import {
   PercentageCircle,
   Judge,
 } from "iconsax-react-native";
+import { toast } from "sonner-native";
 import { router, useLocalSearchParams } from "expo-router";
 
 import ContentBox from "@/src/components/ContentBox";
@@ -28,7 +29,6 @@ import {
   getWalletBalance,
   mutualFundSubscription,
 } from "@/src/api";
-import { showMessage } from "react-native-flash-message";
 import AppPicker from "@/src/components/AppPicker";
 
 const ProductDetails = ({}) => {
@@ -46,7 +46,6 @@ const ProductDetails = ({}) => {
     product: productString,
   } = useLocalSearchParams();
   const product = JSON.parse(productString);
-  console.log(product);
 
   const validationSchema = Yup.object().shape({
     amount: Yup.number()
@@ -104,6 +103,63 @@ const ProductDetails = ({}) => {
       value: tenor.tenor,
     };
   });
+
+  const handleInvestment = async (values, { setSubmitting }) => {
+    const { amount } = values;
+    setSubmitting(true);
+    if (amount > userBalance.amount) {
+      toast.error("Insufficient Wallet Balance");
+      setSubmitting(false);
+    } else {
+      if (amount < product.minimumInvestment) {
+        toast.error(
+          `Minimum investment is ${amountFormatter.format(
+            product.minimumInvestment
+          )}`
+        );
+        setSubmitting(false);
+      } else {
+        if (isLiabilityProduct) {
+          if (!selectedTenor) {
+            toast.error("Please Select a product tenor");
+            setSubmitting(false);
+            return;
+          }
+          // setTimeout(() => {
+          //   setSubmitting(false);
+          //   router.push({
+          //     pathname: "/confirm-investment",
+          //     params: {
+          //       header: header,
+          //       headerImageUrl: headerImageUrl && headerImageUrl,
+          //       amount: Number(amount),
+          //       portfolioId: product?.portfolioId,
+          //       portfolioTypeName: product?.portfolioTypeName,
+          //       isLiabilityProduct: true,
+          //       securityId: liabilityProducts[0].securityProductId,
+          //       tenor: selectedTenor,
+          //     },
+          //   });
+          // }, 2000);
+          router.push("/investment-simulator");
+        } else {
+          setTimeout(() => {
+            setSubmitting(false);
+            router.push({
+              pathname: "/confirm-investment",
+              params: {
+                header: header,
+                headerImageUrl: headerImageUrl && headerImageUrl,
+                amount: Number(amount),
+                portfolioId: product?.portfolioId,
+                portfolioTypeName: product?.portfolioTypeName,
+              },
+            });
+          }, 2000);
+        }
+      }
+    }
+  };
 
   return (
     <LayeredScreen
@@ -281,70 +337,7 @@ const ProductDetails = ({}) => {
             <Formik
               validationSchema={validationSchema}
               initialValues={{ amount: 0 }}
-              onSubmit={(values, { setSubmitting }) => {
-                const { amount } = values;
-                setSubmitting(true);
-                if (amount > userBalance.amount) {
-                  showMessage({
-                    message:
-                      "Your wallet balance is insufficient to make this investment",
-                    type: "warning",
-                  });
-                  setSubmitting(false);
-                } else {
-                  if (amount < product.minimumInvestment) {
-                    showMessage({
-                      message: `Minimum investment is ${amountFormatter.format(
-                        product.minimumInvestment
-                      )}`,
-                      type: "warning",
-                    });
-                    setSubmitting(false);
-                  } else {
-                    if (isLiabilityProduct) {
-                      if (!selectedTenor) {
-                        showMessage({
-                          message: "Please select a product tenor",
-                          type: "warning",
-                        });
-                        setSubmitting(false);
-                      } else {
-                        setTimeout(() => {
-                          setSubmitting(false);
-                          router.push({
-                            pathname: "/confirm-investment",
-                            params: {
-                              header: header,
-                              headerImageUrl: headerImageUrl && headerImageUrl,
-                              amount: Number(amount),
-                              portfolioId: product?.portfolioId,
-                              portfolioTypeName: product?.portfolioTypeName,
-                              isLiabilityProduct: true,
-                              securityId:
-                                liabilityProducts[0].securityProductId,
-                              tenor: selectedTenor,
-                            },
-                          });
-                        }, 5000);
-                      }
-                    } else {
-                      setTimeout(() => {
-                        setSubmitting(false);
-                        router.push({
-                          pathname: "/confirm-investment",
-                          params: {
-                            header: header,
-                            headerImageUrl: headerImageUrl && headerImageUrl,
-                            amount: Number(amount),
-                            portfolioId: product?.portfolioId,
-                            portfolioTypeName: product?.portfolioTypeName,
-                          },
-                        });
-                      }, 5000);
-                    }
-                  }
-                }
-              }}
+              onSubmit={handleInvestment}
             >
               {({ handleChange, handleSubmit, isSubmitting }) => (
                 <ContentBox customStyles={{ backgroundColor: Colors.white }}>
