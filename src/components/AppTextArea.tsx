@@ -1,5 +1,6 @@
 import React, { useState, forwardRef } from "react";
 import { TextInput, View, Text, StyleSheet } from "react-native";
+import { Colors } from "../constants/Colors";
 
 const Textarea = forwardRef(
   (
@@ -103,7 +104,7 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   focused: {
-    borderColor: "#007AFF",
+    borderColor: Colors.primary,
     borderWidth: 2,
   },
   error: {
@@ -133,26 +134,3 @@ const styles = StyleSheet.create({
 });
 
 export default Textarea;
-
-// Usage example:
-/*
-import Textarea from './Textarea';
-
-function App() {
-  const [text, setText] = useState('');
-
-  return (
-    <View style={{ padding: 20 }}>
-      <Textarea
-        label="Description"
-        value={text}
-        onChangeText={setText}
-        placeholder="Enter your description here..."
-        maxLength={500}
-        rows={6}
-        error={text.length === 0 ? 'This field is required' : null}
-      />
-    </View>
-  );
-}
-*/

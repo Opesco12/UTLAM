@@ -24,7 +24,7 @@ const AppHeader = () => {
 
       <Image
         source={require("../../assets/images/logo.png")}
-        style={{ alignSelf: "center" }}
+        style={{ alignSelf: "center", height: 35, width: 35 }}
       />
 
       <MaterialCommunityIcons

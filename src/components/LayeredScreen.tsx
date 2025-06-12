@@ -24,7 +24,7 @@ const LayeredScreen = ({
   opacity,
   overlay = false,
   headerText,
-  refreshing,
+  refreshing = false,
   onRefresh,
   ...props
 }) => {
@@ -80,7 +80,7 @@ const LayeredScreen = ({
                   {headerText && (
                     <Image
                       source={require("../../assets/images/logo_white.png")}
-                      style={{ alignSelf: "center" }}
+                      style={{ alignSelf: "center", height: 35, width: 35 }}
                     />
                   )}
                   <StyledText
@@ -141,7 +141,7 @@ const LayeredScreen = ({
                     {headerText && (
                       <Image
                         source={require("../../assets/images/logo_white.png")}
-                        style={{ alignSelf: "center" }}
+                        style={{ alignSelf: "center", height: 35, width: 35 }}
                       />
                     )}
                     <StyledText

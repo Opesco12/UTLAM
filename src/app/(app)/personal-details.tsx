@@ -383,7 +383,7 @@ const PersonalDetails = () => {
                 name={"kinLastname"}
                 onChangeText={handleChange("kinLastname")}
                 width={"48%"}
-                rightLabel={"-Update next of kin's surname"}
+                label={"Last Name"}
                 rightLabelColor={Colors.light}
                 readonly={userHasNextOfKin === 1}
               />

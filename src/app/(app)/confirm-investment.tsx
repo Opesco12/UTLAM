@@ -1,5 +1,4 @@
-import { ActivityIndicator, StyleSheet, View } from "react-native";
-import { Switch } from "@rneui/base";
+import { ActivityIndicator, StyleSheet, View, Switch } from "react-native";
 import { useState } from "react";
 import { showMessage } from "react-native-flash-message";
 import LottieView from "lottie-react-native";

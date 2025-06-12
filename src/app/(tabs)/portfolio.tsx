@@ -103,19 +103,19 @@ const Portfolio = () => {
     setTotalBalance(total);
   }, [fixedIncomePortfolio, mutualFundBalances, userBalance]);
 
-  if (error) {
-    return (
-      <LayeredScreen headerText="My Portfolio">
-        <StyledText
-          type="title"
-          variant="regular"
-          color={Colors.error}
-        >
-          {error}
-        </StyledText>
-      </LayeredScreen>
-    );
-  }
+  // if (error) {
+  //   return (
+  //     <LayeredScreen headerText="My Portfolio">
+  //       <StyledText
+  //         type="title"
+  //         variant="regular"
+  //         color={Colors.error}
+  //       >
+  //         {error}
+  //       </StyledText>
+  //     </LayeredScreen>
+  //   );
+  // }
 
   return (
     <LayeredScreen headerText="My Portfolio">

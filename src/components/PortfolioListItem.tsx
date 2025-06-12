@@ -130,11 +130,13 @@ const PortfolioListItem = ({ product }) => {
           </View>
         </View>
       </View>
-      <ArrowCircleRight2
-        color={Colors.primary}
-        size={35}
-        variant="Bold"
-      />
+      {product?.portfolio !== "Wallet" && (
+        <ArrowCircleRight2
+          color={Colors.primary}
+          size={35}
+          variant="Bold"
+        />
+      )}
     </ContentBox>
   );
 };

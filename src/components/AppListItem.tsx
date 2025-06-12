@@ -1,5 +1,4 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { Switch } from "@rneui/base";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { Colors } from "@/src/constants/Colors";

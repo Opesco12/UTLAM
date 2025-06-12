@@ -9,7 +9,8 @@ import {
 } from "react-native";
 import { useState } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { CheckBox } from "@rneui/base";
+import Checkbox from "expo-checkbox";
+
 import { Colors } from "@/src/constants/Colors";
 import StyledText from "./StyledText";
 import AppDivider from "./AppDivider";
@@ -94,8 +95,8 @@ const AppPicker = ({
       >
         <TouchableOpacity
           style={styles.modal}
-          activeOpacity={1} // Prevents visual feedback on press
-          onPress={() => setModalVisible(false)} // Close modal when backdrop is pressed
+          activeOpacity={1}
+          onPress={() => setModalVisible(false)}
         >
           <View style={styles.modalContent}>
             <View style={styles.line}></View>
@@ -114,11 +115,11 @@ const AppPicker = ({
                   >
                     {item.label}
                   </StyledText>
-                  <CheckBox
-                    checked={
+                  <Checkbox
+                    value={
                       selectedOption && selectedOption.value === item.value
                     }
-                    onPress={() => handleSelect(item)}
+                    onChange={() => handleSelect(item)}
                   />
                 </Pressable>
               )}
@@ -150,6 +151,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "space-between",
+    paddingVertical: 15,
   },
   line: {
     alignSelf: "center",

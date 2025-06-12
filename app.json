@@ -20,6 +20,12 @@
         "NSCameraUsageDescription": "This app needs access to your camera to let you take photos for your profile and to share.",
         "NSMicrophoneUsageDescription": "This app needs access to your microphone to let you record videos with sound."
       },
+      "entitlements": {
+        "aps-environment": "development",
+        "com.apple.security.application-groups": [
+          "group.${ios.bundleIdentifier}.onesignal"
+        ]
+      },
       "bundleIdentifier": "com.utlam.utl"
     },
     "android": {
@@ -27,9 +33,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "permissions": [
-        "android.permission.RECORD_AUDIO"
-      ],
+      "permissions": ["android.permission.RECORD_AUDIO"],
       "package": "com.utlam.utl"
     },
     "web": {
@@ -53,7 +57,14 @@
         }
       ],
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-localization",
+      [
+        "onesignal-expo-plugin",
+        {
+          "mode": "development"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
@@ -64,7 +75,8 @@
       },
       "eas": {
         "projectId": "e5577935-d140-45b8-84d7-36e737a9d571"
-      }
+      },
+      "oneSignalAppId": "c75039b5-eb9a-4161-8758-6bdf5e05d99a"
     },
     "owner": "opesco",
     "runtimeVersion": {

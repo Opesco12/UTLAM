@@ -1,6 +1,8 @@
 import { router } from "expo-router";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { toast } from "sonner-native";
+
 import Keys from "@/src/storage/keys";
 
 const AuthContext = createContext({});
@@ -22,11 +24,22 @@ const retrieveUserData = async () => {
   }
 };
 
+const clearUserData = async () => {
+  try {
+    await AsyncStorage.removeItem(Keys.USER_DATA);
+    console.log("User data successfully cleared");
+  } catch (error) {
+    console.error("Error clearing user data", error);
+  }
+};
+
 const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isRouterReady, setIsRouterReady] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [userData, setUserData] = useState(null);
+  const isHandlingLogout = useRef(false);
+  const logoutPromise = useRef<Promise<unknown> | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -49,33 +62,40 @@ const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
-  //   const login = async (token) => {
-  //     try {
-  //       await AsyncStorage.setItem("authToken", token);
-  //       setIsAuthenticated(true);
-  //       if (isRouterReady) {
-  //         router.replace("/(tabs)");
-  //       }
-  //     } catch (error) {
-  //       console.error("Login error:", error);
-  //     }
-  //   };
+  const handleLogout = async () => {
+    if (isHandlingLogout.current) {
+      return logoutPromise.current;
+    }
 
-  //   const logout = async () => {
-  //     try {
-  //       await AsyncStorage.removeItem("authToken");
-  //       setIsAuthenticated(false);
-  //       if (isRouterReady) {
-  //         router.replace("/(auth)/login");
-  //       }
-  //     } catch (error) {
-  //       console.error("Logout error:", error);
-  //     }
-  //   };
+    isHandlingLogout.current = true;
+    logoutPromise.current = new Promise(async (resolve) => {
+      try {
+        toast.error("Your session expired. Please log in again.");
+        await clearUserData();
+        setIsAuthenticated(false);
+        setUserData(null);
+        router.replace("/(auth)/login");
+      } catch (error) {
+        console.error("Logout error:", error);
+      } finally {
+        isHandlingLogout.current = false;
+        logoutPromise.current = null;
+        resolve(null);
+      }
+    });
+
+    return logoutPromise.current;
+  };
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, isLoading, setIsAuthenticated }}
+      value={{
+        isAuthenticated,
+        isLoading,
+        setIsAuthenticated,
+        handleLogout,
+        isRouterReady,
+      }}
     >
       {children}
     </AuthContext.Provider>

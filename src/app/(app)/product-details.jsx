@@ -266,7 +266,7 @@ const ProductDetails = ({}) => {
                     >
                       <SavingDetails
                         title={"Annualized Yield"}
-                        detail={"8.99%"}
+                        detail={`${product?.return}%`}
                         icon={
                           <PercentageCircle
                             variant="Bold"

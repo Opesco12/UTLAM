@@ -4,10 +4,8 @@ import {
   SafeAreaView,
   StatusBar,
   StyleSheet,
-  Text,
   View,
   RefreshControl,
-  KeyboardAvoidingView,
 } from "react-native";
 import { StatusBar as ExpoStatusBar } from "expo-status-bar";
 
@@ -20,9 +18,20 @@ const Screen = ({
   children,
   customStyles,
   stickyHeaderIndices,
-  refreshing,
+  refreshing = false,
   onRefresh,
 }) => {
+  const refreshProps = onRefresh
+    ? {
+        refreshControl: (
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          />
+        ),
+      }
+    : {};
+
   return (
     <>
       <ExpoStatusBar style="dark" />
@@ -40,12 +49,7 @@ const Screen = ({
               style={{ flex: 1 }}
               contentContainerStyle={{ flexGrow: 1 }}
               showsVerticalScrollIndicator={false}
-              refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={onRefresh}
-                />
-              }
+              {...refreshProps}
             >
               <View style={{ flex: 1 }}>{children}</View>
             </ScrollView>
@@ -61,12 +65,7 @@ const Screen = ({
                   style={{ flex: 1 }}
                   contentContainerStyle={[{ flexGrow: 1 }]}
                   showsVerticalScrollIndicator={false}
-                  refreshControl={
-                    <RefreshControl
-                      refreshing={refreshing}
-                      onRefresh={onRefresh}
-                    />
-                  }
+                  {...refreshProps}
                 >
                   {children}
                 </ScrollView>

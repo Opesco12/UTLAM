@@ -83,7 +83,7 @@ const Support = () => {
             variant="semibold"
             color={Colors.primary}
           >
-            Telephone Number: (+234) 903 - 0289 - 111
+            Phone Number: (+234) 903 - 0289 - 111
           </StyledText>
           {isNumberCopied ? (
             <CopySuccess

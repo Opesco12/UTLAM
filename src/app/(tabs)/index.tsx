@@ -1,24 +1,6 @@
-import {
-  Dimensions,
-  StyleSheet,
-  View,
-  Pressable,
-  ScrollView,
-  ActivityIndicator,
-  TouchableOpacity,
-  TextInput,
-} from "react-native";
-import React, { useState, useEffect, useRef } from "react";
-import {
-  EmptyWallet,
-  Notification,
-  ReceiveSquare2,
-  TransmitSqaure2,
-  Eye,
-  EyeSlash,
-  Copy,
-  Refresh2,
-} from "iconsax-react-native";
+import { StyleSheet, View, ActivityIndicator, TextInput } from "react-native";
+import React, { useState, useEffect } from "react";
+import { Copy, Notification } from "iconsax-react-native";
 import { toast } from "sonner-native";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -28,7 +10,6 @@ import * as Yup from "yup";
 import { Colors } from "@/src/constants/Colors";
 import StyledText from "@/src/components/StyledText";
 import LayeredScreen from "@/src/components/LayeredScreen";
-import AppRipple from "@/src/components/AppRipple";
 import AppModal from "@/src/components/AppModal";
 import QuickAccess from "@/src/components/QuickAccess";
 import Banner from "@/assets/images/svg_images/Banner";
@@ -47,7 +28,6 @@ import {
 } from "@/src/api";
 
 import { copyToClipboard } from "../../helperFunctions/copyToClipboard";
-import { amountFormatter } from "../../helperFunctions/amountFormatter";
 import AppButton from "@/src/components/AppButton";
 import AppTextField from "@/src/components/AppTextField";
 
@@ -172,12 +152,12 @@ const Index = () => {
     amount: Yup.number()
       .typeError("Amount must be a number")
       .positive("Amount must be greater than zero")
-      .required("Amount is required"),
-    // .test(
-    //   "maxBalance",
-    //   "Insufficient Balance",
-    //   (value) => value <= (userBalance.amount || 0)
-    // ),
+      .required("Amount is required")
+      .test(
+        "maxBalance",
+        "Insufficient Balance",
+        (value) => value <= (userBalance.amount || 0)
+      ),
   });
 
   useEffect(() => {
@@ -253,8 +233,8 @@ const Index = () => {
         );
       }
     } catch (err) {
-      toast.error("Failed to load data");
-      console.error(err);
+      // toast.error("Failed to load data");
+      // console.error(err);
     } finally {
       setIsLoading(false);
     }

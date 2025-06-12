@@ -1,5 +1,4 @@
 import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { endpoints } from "./endpoints";
 import keys from "../storage/keys";
 import {
@@ -7,11 +6,9 @@ import {
   retrieveUserData,
   storeUserData,
 } from "../storage/userData";
-import { showMessage } from "react-native-flash-message";
-import { Redirect, router } from "expo-router";
+import { router } from "expo-router";
 import { toast } from "sonner-native";
 
-// const BASE_URL = "https://utl-proxy.vercel.app/api/v1";
 const BASE_URL = "https://xfundclientapi.utlam.com:1008/api/v1";
 
 const getAuthToken = async () => {
@@ -23,6 +20,41 @@ const axiosInstance = axios.create({
   baseURL: BASE_URL,
   timeout: 30000,
 });
+
+let isHandling401 = false;
+let hasRedirectedToLogin = false;
+
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const { requiresAuth } = error.config || {};
+    if (
+      error.response?.status === 401 &&
+      requiresAuth &&
+      !isHandling401 &&
+      !hasRedirectedToLogin
+    ) {
+      isHandling401 = true;
+      try {
+        const token = await getAuthToken();
+        if (!token) {
+          return Promise.reject(error);
+        }
+        toast.error("Your session expired. Please log in again.", {
+          id: "session-expired",
+        });
+        await clearUserData();
+        hasRedirectedToLogin = true;
+        router.replace("/(auth)/login");
+      } catch (err) {
+        console.error("Error handling 401:", err);
+      } finally {
+        isHandling401 = false;
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 const apiCall = async ({
   endpoint,
@@ -42,6 +74,7 @@ const apiCall = async ({
       headers: {
         "Content-Type": "application/json",
       },
+      requiresAuth,
       ...customConfig,
     };
 
@@ -52,7 +85,6 @@ const apiCall = async ({
     if (requiresAuth) {
       const token = await getAuthToken();
       if (!token) {
-        // throw new Error("Authentication required but no token found");
         return router.replace("/(auth)/login");
       }
       config.headers["Authorization"] = `Bearer ${token}`;
@@ -61,15 +93,12 @@ const apiCall = async ({
     const response = await axiosInstance(config);
     return response.data;
   } catch (error) {
-    console.log(error.response.data);
-    console.error("API call error:", error);
-    console.log(typeof error.status);
-    if (error.status === 401) {
-      toast.error("Your session expired. Please log in again.");
-      await clearUserData();
-      return router.replace("/(auth)/login");
+    if (error.response?.status !== 401 || !requiresAuth) {
+      console.log("error response: ", error);
+      console.error("API call error:", error);
+      throw error;
     }
-    throw error;
+    return undefined;
   }
 };
 
@@ -98,9 +127,9 @@ export const registerNewIndividual = async (info) => {
     return data;
   } catch (error) {
     console.log(error);
-    if (err.status === 400) {
+    if (error.response?.status === 400) {
       toast.error(
-        `Email address ${data?.email} or phone number has been used or is not available`
+        `Email address ${info?.email} or phone number has been used or is not available`
       );
     } else {
       toast.error("Please try again later");
@@ -118,7 +147,7 @@ export const registerExistingIndividual = async (info) => {
     });
     return data;
   } catch (error) {
-    if (error.status === 400) {
+    if (error.response?.status === 400) {
       toast.error("Invalid Details or account already exists");
     } else {
       toast.error("An error occurred");
@@ -134,8 +163,10 @@ export const getClientInfo = async () => {
     });
     return data;
   } catch (error) {
-    console.log(error);
-    toast.error("An error occured");
+    if (error.response?.status !== 401) {
+      console.log(error);
+      toast.error("An error occurred");
+    }
   }
 };
 
@@ -147,8 +178,10 @@ export const getNextOfKins = async () => {
     });
     return data;
   } catch (error) {
-    console.log(error);
-    toast.error("An error occured");
+    if (error.response?.status !== 401) {
+      console.log(error);
+      toast.error("An error occurred");
+    }
   }
 };
 
@@ -159,11 +192,12 @@ export const createNextOfKin = async (info) => {
       method: "POST",
       data: info,
     });
-
     return data;
   } catch (error) {
-    console.log(error);
-    toast.error("An error occured");
+    if (error.response?.status !== 401) {
+      console.log(error);
+      toast.error("An error occurred");
+    }
   }
 };
 
@@ -178,7 +212,7 @@ export const login = async (username, password) => {
     return data;
   } catch (error) {
     console.log(error);
-    if (error.status === 400) {
+    if (error.response?.status === 400) {
       toast.error("Incorrect Email or Password");
     } else {
       toast.error("Please try again later");
@@ -198,7 +232,7 @@ export const login2fa = async (info) => {
     return data;
   } catch (error) {
     console.log(error);
-    if (err.status === 400) {
+    if (error.response?.status === 400) {
       toast.error("Incorrect Security Code");
     } else {
       toast.error("Please try again later");
@@ -217,8 +251,7 @@ export const activateAccount = async (info) => {
     return data;
   } catch (error) {
     console.log(error);
-    if (error.status === 400) {
-      setIsIncorrect(true);
+    if (error.response?.status === 400) {
       toast.error("Incorrect Security Code");
     } else {
       toast.error("Please try again later");
@@ -237,10 +270,10 @@ export const resnedActivationCode = async (info) => {
     return data;
   } catch (error) {
     console.log(error);
-    if (error.status === 400) {
-      toast.error("Incorred Security code");
+    if (error.response?.status === 400) {
+      toast.error("Incorrect Security Code");
     } else {
-      toast.error("An errir occured");
+      toast.error("An error occurred");
     }
   }
 };
@@ -253,7 +286,12 @@ export const logout = async (token) => {
       data: { token: token },
     });
     return data;
-  } catch (error) {}
+  } catch (error) {
+    if (error.response?.status !== 401) {
+      console.log(error);
+      toast.error("An error occurred during logout");
+    }
+  }
 };
 
 export const changePassword = async (oldPassword, newPassword) => {
@@ -265,11 +303,13 @@ export const changePassword = async (oldPassword, newPassword) => {
     });
     return data;
   } catch (error) {
-    console.log(error);
-    if (error.status === 400) {
-      toast.error("Incorrect Password");
-    } else {
-      toast.error("An error occured");
+    if (error.response?.status !== 401) {
+      console.log(error);
+      toast.error(
+        error.response?.status === 400
+          ? "Incorrect Password"
+          : "An error occurred"
+      );
     }
   }
 };
@@ -280,14 +320,15 @@ export const resetPasswordRequest = async (email) => {
       endpoint: endpoints.ResetPasswordRequest,
       method: "POST",
       data: { username: email, emailAddress: email },
+      requiresAuth: false,
     });
     return data;
   } catch (error) {
-    if (error.status === 400) {
-      toast.error("Please input a registered email address");
-    } else {
-      toast.error("An error occured");
-    }
+    toast.error(
+      error.response?.status === 400
+        ? "Please input a registered email address"
+        : "An error occurred"
+    );
   }
 };
 
@@ -297,14 +338,13 @@ export const resetPassword = async (token, password) => {
       endpoint: endpoints.ResetPassword,
       method: "POST",
       data: { token: token, password: password },
+      requiresAuth: false,
     });
     return data;
   } catch (error) {
-    if (error.status === 400) {
-      toast.error("Incorrect token");
-    } else {
-      toast.error("An error occured");
-    }
+    toast.error(
+      error.response?.status === 400 ? "Incorrect token" : "An error occurred"
+    );
   }
 };
 
@@ -317,8 +357,10 @@ export const getWalletBalance = async () => {
     });
     return data;
   } catch (error) {
-    console.log(error);
-    toast.error("An error occured");
+    if (error.response?.status !== 401) {
+      console.log(error);
+      toast.error("An error occurred");
+    }
   }
 };
 
@@ -331,8 +373,10 @@ export const getProducts = async () => {
     });
     return data;
   } catch (error) {
-    console.log(error);
-    toast.error("An error occured");
+    if (error.response?.status !== 401) {
+      console.log(error);
+      toast.error("An error occurred");
+    }
   }
 };
 
@@ -344,7 +388,9 @@ export const getVirtualAccounts = async () => {
     });
     return data;
   } catch (error) {
-    toast.error("An error occured");
+    if (error.response?.status !== 401) {
+      toast.error("An error occurred");
+    }
   }
 };
 
@@ -356,7 +402,9 @@ export const getClientPortfolio = async () => {
     });
     return data;
   } catch (error) {
-    toast.error("An error occured");
+    if (error.response?.status !== 401) {
+      toast.error("An error occurred");
+    }
   }
 };
 
@@ -368,7 +416,9 @@ export const getMutualFundOnlineBalances = async () => {
     });
     return data;
   } catch (error) {
-    toast.error("An error occured");
+    if (error.response?.status !== 401) {
+      toast.error("An error occurred");
+    }
   }
 };
 
@@ -380,8 +430,10 @@ export const getMutualFundOnlineBalance = async (portfolioId) => {
     });
     return data;
   } catch (error) {
-    console.log(error);
-    toast.error("An error occured");
+    if (error.response?.status !== 401) {
+      console.log(error);
+      toast.error("An error occurred");
+    }
   }
 };
 
@@ -393,9 +445,11 @@ export const getMutualFundStatement = async (portfolioId) => {
       method: "GET",
     });
     return data;
-  } catch (err) {
-    console.log(err);
-    toast.error("An error occured");
+  } catch (error) {
+    if (error.response?.status !== 401) {
+      console.log(error);
+      toast.error("An error occurred");
+    }
   }
 };
 
@@ -407,38 +461,35 @@ export const getTransactions = async (startdate, enddate) => {
     });
     return data;
   } catch (error) {
-    toast.error("An error occured");
+    if (error.response?.status !== 401) {
+      toast.error("An error occurred");
+    }
   }
 };
 
-export const mutualFundSubscription = async ({
-  accountNumber,
-  portfolioId,
-  amount,
-}) => {
-  if (accountNumber) {
-  } else {
-    try {
-      const data = await apiCall({
-        endpoint: endpoints.mutualFundNoAccount,
-        method: "POST",
-        data: {
-          portfolioId: portfolioId,
-          amount: amount,
-        },
-      });
-      console.log("The request gave back: ", data);
-      return data;
-    } catch (error) {
-      toast.error("An error occured");
+export const mutualFundSubscription = async ({ portfolioId, amount }) => {
+  try {
+    const data = await apiCall({
+      endpoint: endpoints.mutualFundNoAccount,
+      method: "POST",
+      data: {
+        portfolioId: portfolioId,
+        amount: amount,
+      },
+    });
+    console.log("The request gave back: ", data);
+    return data;
+  } catch (error) {
+    if (error.response?.status !== 401) {
+      toast.error("An error occurred");
     }
   }
 };
 
 export const mutualfundRedemption = async (accountNo, amount) => {
   try {
-    console.log("account numer is:", accountNo);
-    console.log("amount is : ", amount);
+    console.log("account number is:", accountNo);
+    console.log("amount is: ", amount);
     const data = await apiCall({
       endpoint: endpoints.mutualfundRedemption,
       method: "POST",
@@ -448,9 +499,11 @@ export const mutualfundRedemption = async (accountNo, amount) => {
       },
     });
     return data;
-  } catch (err) {
-    console.log(err);
-    toast.error("An error occured");
+  } catch (error) {
+    if (error.response?.status !== 401) {
+      console.log(error);
+      toast.error("An error occurred");
+    }
   }
 };
 
@@ -462,8 +515,10 @@ export const getFixedIcomeOnlineBalances = async (portfolioId) => {
     });
     return data;
   } catch (error) {
-    console.log(error);
-    toast.error("An error occured");
+    if (error.response?.status !== 401) {
+      console.log(error);
+      toast.error("An error occurred");
+    }
   }
 };
 
@@ -474,9 +529,11 @@ export const getLiabilityProducts = async (portfolioId) => {
       method: "GET",
     });
     return data;
-  } catch (err) {
-    console.log(err);
-    toast.error("An error occured");
+  } catch (error) {
+    if (error.response?.status !== 401) {
+      console.log(error);
+      toast.error("An error occurred");
+    }
   }
 };
 
@@ -488,8 +545,10 @@ export const getTenor = async (productId) => {
     });
     return data;
   } catch (error) {
-    console.log(error);
-    toast.error("An error occured");
+    if (error.response?.status !== 401) {
+      console.log(error);
+      toast.error("An error occurred");
+    }
   }
 };
 
@@ -512,10 +571,12 @@ export const fixedIncomeSubscriptionOrder = async ({
         tenor: tenor,
       },
     });
-
     return data;
   } catch (error) {
-    console.log(error);
+    if (error.response?.status !== 401) {
+      console.log(error);
+      toast.error("An error occurred while processing fund redemption");
+    }
   }
 };
 
@@ -531,8 +592,10 @@ export const fixedIncomeRedemptionOrder = async (referenceNo, amount) => {
     });
     return data;
   } catch (error) {
-    console.log(error);
-    toast.error("An error occured while processing fund redemption");
+    if (error.response?.status !== 401) {
+      console.log(error);
+      toast.error("An error occurred while processing fund redemption");
+    }
   }
 };
 
@@ -544,7 +607,9 @@ export const hasTransactionPin = async () => {
     });
     return data;
   } catch (error) {
-    toast.error("An error occurred");
+    if (error.response?.status !== 401) {
+      toast.error("An error occurred");
+    }
   }
 };
 
@@ -557,7 +622,9 @@ export const createTransactionPin = async (requestData) => {
     });
     return data;
   } catch (error) {
-    toast.error("An error occurred");
+    if (error.response?.status !== 401) {
+      toast.error("An error occurred");
+    }
   }
 };
 
@@ -571,7 +638,9 @@ export const changeTransactionPin = async (requestData) => {
     });
     return data;
   } catch (error) {
-    toast.error("An error occurred");
+    if (error.response?.status !== 401) {
+      toast.error("An error occurred");
+    }
   }
 };
 
@@ -581,10 +650,11 @@ export const resetTransactionPinRequest = async (username) => {
       endpoint: `${endpoints.resetPinRequest}?username=${username}`,
       method: "POST",
     });
-
     return data;
   } catch (error) {
-    toast.error("An error occurred");
+    if (error.response?.status !== 401) {
+      toast.error("An error occurred");
+    }
   }
 };
 
@@ -597,7 +667,9 @@ export const resetTransactionPin = async (requestData) => {
     });
     return data;
   } catch (error) {
-    toast.error("An error occurred");
+    if (error.response?.status !== 401) {
+      toast.error("An error occurred");
+    }
   }
 };
 
@@ -610,7 +682,7 @@ export const sendMessageToClientManager = async (message) => {
     });
     return data;
   } catch (error) {
-    if (!(error instanceof AuthenticationError)) {
+    if (error.response?.status !== 401) {
       toast.error("An error occurred");
     }
     return null;
@@ -626,8 +698,10 @@ export const updateClientInfo = async (info) => {
     });
     return data;
   } catch (error) {
-    console.error(error.message);
-    toast.error("An error occured");
+    if (error.response?.status !== 401) {
+      console.error(error.message);
+      toast.error("An error occurred");
+    }
   }
 };
 
@@ -639,7 +713,9 @@ export const getBanks = async () => {
     });
     return data;
   } catch (error) {
-    toast.error("An error occurred");
+    if (error.response?.status !== 401) {
+      toast.error("An error occurred");
+    }
   }
 };
 
@@ -652,7 +728,9 @@ export const createClientBank = async (requestData) => {
     });
     return data;
   } catch (error) {
-    toast.error(error?.response?.data?.Message);
+    if (error.response?.status !== 401) {
+      toast.error(error?.response?.data?.Message || "An error occurred");
+    }
   }
 };
 
@@ -664,7 +742,9 @@ export const getClientBankAccounts = async () => {
     });
     return data;
   } catch (error) {
-    toast.error("Unable to fetch client bank accounts");
+    if (error.response?.status !== 401) {
+      toast.error("Unable to fetch client bank accounts");
+    }
   }
 };
 
@@ -677,10 +757,12 @@ export const debitWallet = async (requestData) => {
     });
     return data;
   } catch (error) {
-    if (error.status === 400) {
-      toast.error("Incorrect pin");
-    } else {
-      toast.error("An error occurred while processing fund withdrawal");
+    if (error.response?.status !== 401) {
+      if (error.response?.status === 400) {
+        toast.error("Incorrect pin");
+      } else {
+        toast.error("An error occurred while processing fund withdrawal");
+      }
     }
   }
 };
@@ -693,7 +775,9 @@ export const getPendingWithdrawals = async () => {
     });
     return data;
   } catch (error) {
-    toast.error("An error occurred");
+    if (error.response?.status !== 401) {
+      toast.error("An error occurred");
+    }
   }
 };
 
@@ -705,23 +789,22 @@ export const getPendingDocuments = async () => {
     });
     return data;
   } catch (error) {
-    toast.error("An error occured while fetching photo");
+    if (error.response?.status !== 401) {
+      toast.error("An error occurred while fetching photo");
+    }
   }
 };
+
 export const uploadClientDocument = async (file, documentId, comment) => {
   try {
     const formData = new FormData();
-
     formData.append("Files", file);
-
     formData.append("DocumentId", documentId);
-
     if (comment) {
       formData.append("Comment", comment);
     }
 
     const token = await getAuthToken();
-
     const response = await axios.post(
       `${BASE_URL}/${endpoints.uploadClientDocument}`,
       formData,
@@ -730,14 +813,16 @@ export const uploadClientDocument = async (file, documentId, comment) => {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
         },
+        requiresAuth: true, // Add for consistency with interceptor
       }
     );
-
     toast.success("Document uploaded successfully");
     return response.data;
   } catch (error) {
-    console.log(error.message);
-    toast.error("Document upload failed");
+    if (error.response?.status !== 401) {
+      console.log(error.message);
+      toast.error("Document upload failed");
+    }
     throw error;
   }
 };
@@ -750,7 +835,10 @@ export const fetchClientPhoto = async () => {
     });
     return data;
   } catch (error) {
-    console.error(error);
+    if (error.response?.status !== 401) {
+      console.error(error);
+      toast.error("An error occurred while fetching photo");
+    }
   }
 };
 
@@ -767,7 +855,6 @@ export const uploadImage = async (file) => {
     };
 
     const token = await getAuthToken();
-
     const response = await fetch(`${BASE_URL}/${endpoints.uploadClientPhoto}`, {
       method: "POST",
       headers: {
@@ -777,19 +864,19 @@ export const uploadImage = async (file) => {
       body: JSON.stringify(requestBody),
     });
 
-    // Check response status
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Upload failed:", errorText);
       throw new Error(`Upload failed: ${response.status}`);
     }
 
-    // Parse and return response data
     const responseData = await response.json();
     return responseData;
   } catch (error) {
-    console.error("Upload error:", error);
-    toast.error("An error occured");
+    if (error.response?.status !== 401) {
+      console.error("Upload error:", error);
+      toast.error("An error occurred");
+    }
     throw error;
   }
 };

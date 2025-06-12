@@ -342,7 +342,17 @@ const PinManagement = () => {
             />
           </View>
           <TouchableOpacity
-            style={[styles.button, isSubmitting && styles.buttonDisabled]}
+            style={[
+              {
+                backgroundColor: Colors.primary,
+                paddingVertical: 12,
+                borderRadius: 6,
+                alignItems: "center",
+                justifyContent: "center",
+                width: "100%",
+              },
+              isSubmitting && styles.buttonDisabled,
+            ]}
             onPress={handleConfirm}
             disabled={isSubmitting}
           >

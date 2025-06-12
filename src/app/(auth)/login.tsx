@@ -1,7 +1,6 @@
 import { ActivityIndicator, Image, View } from "react-native";
 import { useState } from "react";
 import { Formik } from "formik";
-import { Icon } from "@rneui/base";
 import { router } from "expo-router";
 
 import { Colors } from "@/src/constants/Colors";
@@ -23,7 +22,7 @@ const Header = () => {
     >
       <Image
         source={require("../../../assets/images/logo.png")}
-        style={{ alignSelf: "center" }}
+        style={{ alignSelf: "center", height: 35, width: 35 }}
       />
     </View>
   );
@@ -31,7 +30,6 @@ const Header = () => {
 
 const Login = () => {
   const [email, setEmail] = useState(null);
-  const [hidePassword, setHidePassword] = useState(true);
 
   return (
     <Screen>
@@ -82,17 +80,9 @@ const Login = () => {
               />
               <AppTextField
                 label={"Password"}
-                rightIcon={
-                  <Icon
-                    type="material-community"
-                    name={hidePassword ? "eye-off-outline" : "eye-outline"}
-                    color={Colors.light}
-                    onPress={() => setHidePassword(!hidePassword)}
-                  />
-                }
+                isPassword={true}
                 name={"password"}
                 onChangeText={handleChange("password")}
-                secureTextEntry={hidePassword ? true : false}
               />
               <StyledText
                 color={Colors.primary}

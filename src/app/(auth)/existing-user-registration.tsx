@@ -82,11 +82,13 @@ const ExistingUserRegistration = () => {
                 name={"password"}
                 onChangeText={handleChange("password")}
                 label={"Password"}
+                isPassword={true}
               />
               <AppTextField
                 name={"confirmPassword"}
                 onChangeText={handleChange("confirmPassword")}
                 label={"Confirm Password"}
+                isPassword={true}
               />
 
               <AppButton

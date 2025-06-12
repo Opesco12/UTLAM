@@ -7,7 +7,6 @@ import {
 } from "react-native";
 import { useEffect, useState } from "react";
 import { router } from "expo-router";
-import { Icon } from "@rneui/themed";
 import { Formik, Field } from "formik";
 import { toast } from "sonner-native";
 import Checkbox from "expo-checkbox";
@@ -308,28 +307,14 @@ const Register = () => {
                     onChangeText={handleChange("password")}
                     name="password"
                     label="Password"
-                    rightIcon={
-                      <Icon
-                        type="material-community"
-                        name={hidePassword ? "eye-off-outline" : "eye-outline"}
-                        onPress={() => setHidePassword(!hidePassword)}
-                        color={Colors.light}
-                      />
-                    }
+                    isPassword={true}
                     secureTextEntry={hidePassword}
                   />
                   <AppTextField
                     onChangeText={handleChange("confirmPassword")}
                     name="confirmPassword"
                     label="Confirm Password"
-                    rightIcon={
-                      <Icon
-                        type="material-community"
-                        name={hidePassword ? "eye-off-outline" : "eye-outline"}
-                        onPress={() => setHidePassword(!hidePassword)}
-                        color={Colors.light}
-                      />
-                    }
+                    isPassword={true}
                     secureTextEntry={hidePassword}
                   />
                 </>
