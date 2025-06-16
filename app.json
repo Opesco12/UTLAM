@@ -83,6 +83,8 @@
       "policy": "appVersion"
     },
     "updates": {
+      "checkOnLaunch": "ALWAYS",
+      "launchWaitMs": 0,
       "url": "https://u.expo.dev/e5577935-d140-45b8-84d7-36e737a9d571"
     }
   }

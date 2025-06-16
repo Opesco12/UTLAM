@@ -6,8 +6,9 @@ import { useEffect } from "react";
 import { Toaster } from "sonner-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-// import { OneSignal, LogLevel } from "react-native-onesignal";
+import { OneSignal, LogLevel } from "react-native-onesignal";
 import { PostHogProvider } from "posthog-react-native";
+import * as Updates from "expo-updates";
 
 import { Colors } from "../constants/Colors";
 import AuthProvider, { useAuth } from "@/context/authContext";
@@ -38,12 +39,25 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
-  // useEffect(() => {
-  //   // Enable verbose logging for debugging (remove in production)
-  //   // OneSignal.Debug.setLogLevel(LogLevel.Verbose);
-  //   OneSignal.initialize("c75039b5-eb9a-4161-8758-6bdf5e05d99a");
-  //   OneSignal.Notifications.requestPermission(true);
-  // }, []);
+  async function checkForUpdates() {
+    try {
+      const update = await Updates.checkForUpdateAsync();
+      if (update.isAvailable) {
+        await Updates.fetchUpdateAsync();
+        await Updates.reloadAsync();
+      }
+    } catch (error) {
+      console.log("Error checking for updates:", error);
+    }
+  }
+
+  useEffect(() => {
+    checkForUpdates();
+    // Enable verbose logging for debugging (remove in production)
+    // OneSignal.Debug.setLogLevel(LogLevel.Verbose);
+    OneSignal.initialize("c75039b5-eb9a-4161-8758-6bdf5e05d99a");
+    OneSignal.Notifications.requestPermission(true);
+  }, []);
 
   if (!loaded) {
     return null;
