@@ -1,14 +1,12 @@
 import "react-native-reanimated";
-import { Platform, StatusBar } from "react-native";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
-import FlashMessage from "react-native-flash-message";
 import { Toaster } from "sonner-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { OneSignal, LogLevel } from "react-native-onesignal";
+// import { OneSignal, LogLevel } from "react-native-onesignal";
 import { PostHogProvider } from "posthog-react-native";
 
 import { Colors } from "../constants/Colors";
@@ -40,12 +38,12 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
-  useEffect(() => {
-    // Enable verbose logging for debugging (remove in production)
-    // OneSignal.Debug.setLogLevel(LogLevel.Verbose);
-    OneSignal.initialize("c75039b5-eb9a-4161-8758-6bdf5e05d99a");
-    OneSignal.Notifications.requestPermission(true);
-  }, []);
+  // useEffect(() => {
+  //   // Enable verbose logging for debugging (remove in production)
+  //   // OneSignal.Debug.setLogLevel(LogLevel.Verbose);
+  //   OneSignal.initialize("c75039b5-eb9a-4161-8758-6bdf5e05d99a");
+  //   OneSignal.Notifications.requestPermission(true);
+  // }, []);
 
   if (!loaded) {
     return null;

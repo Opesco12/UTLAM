@@ -27,7 +27,6 @@ import {
   getMutualFundOnlineBalance,
   getTenor,
   getWalletBalance,
-  mutualFundSubscription,
 } from "@/src/api";
 import AppPicker from "@/src/components/AppPicker";
 
@@ -39,6 +38,7 @@ const ProductDetails = ({}) => {
   const [productTenors, setProductTenors] = useState([]);
   const [selectedTenor, setSelectedTenor] = useState(null);
   const [investmentBalance, setInvestmentBalance] = useState(null);
+  const [hasMutualFundInvestment, setHasMutualFundInvestment] = useState(false);
 
   const {
     header,
@@ -47,10 +47,32 @@ const ProductDetails = ({}) => {
   } = useLocalSearchParams();
   const product = JSON.parse(productString);
 
+  const getMinimumInvestment = () => {
+    if (product.portfolioType === 3 && hasMutualFundInvestment) {
+      return product.minimumSubsequentInvestment || product.minimumInvestment;
+    }
+    return product.minimumInvestment;
+  };
+
   const validationSchema = Yup.object().shape({
     amount: Yup.number()
       .required("Amount is required")
-      .moreThan(0, "Please input amount"),
+      .moreThan(0, "Please input a valid amount")
+      .max(
+        userBalance?.amount || 0,
+        `Amount cannot exceed wallet balance (${amountFormatter.format(
+          userBalance?.amount || 0
+        )})`
+      )
+      .min(
+        getMinimumInvestment(),
+        `Minimum investment is ${amountFormatter.format(
+          getMinimumInvestment()
+        )}`
+      ),
+    ...(isLiabilityProduct && {
+      tenor: Yup.string().required("Please select a product tenor"),
+    }),
   });
 
   useEffect(() => {
@@ -60,19 +82,26 @@ const ProductDetails = ({}) => {
       setUserBalance(userBalance[0]);
 
       if (product.portfolioType === 9) {
-        const investmentbalances = await getFixedIcomeOnlineBalances(
+        const investmentBalances = await getFixedIcomeOnlineBalances(
           product.portfolioId
         );
-        var balance = 0;
-        investmentbalances?.map((investment, index) => {
-          balance += investment.currentValue;
-        });
+        const balance = investmentBalances?.reduce(
+          (sum, investment) => sum + investment.currentValue,
+          0
+        );
         setInvestmentBalance(balance);
       } else {
         const investment = await getMutualFundOnlineBalance(
           product.portfolioId
         );
-        if (investment) setInvestmentBalance(investment.balance);
+        console.log("Investment Balance:", investment);
+        if (investment && typeof investment.balance !== "undefined") {
+          setInvestmentBalance(investment.balance);
+          setHasMutualFundInvestment(true);
+        } else {
+          setInvestmentBalance(0);
+          setHasMutualFundInvestment(false);
+        }
       }
 
       setLoading(false);
@@ -97,75 +126,48 @@ const ProductDetails = ({}) => {
     fetchData();
   }, []);
 
-  const tenorOptions = productTenors?.map((tenor, index) => {
-    return {
-      label: `${tenor.tenor} Days`,
-      value: tenor.tenor,
-    };
-  });
+  const tenorOptions = productTenors?.map((tenor) => ({
+    label: `${tenor.tenor} Days`,
+    value: tenor.tenor,
+  }));
 
   const handleInvestment = async (values, { setSubmitting }) => {
-    const { amount } = values;
     setSubmitting(true);
-    if (amount > userBalance.amount) {
-      toast.error("Insufficient Wallet Balance");
-      setSubmitting(false);
-    } else {
-      if (amount < product.minimumInvestment) {
-        toast.error(
-          `Minimum investment is ${amountFormatter.format(
-            product.minimumInvestment
-          )}`
-        );
+    try {
+      const { amount, tenor } = values;
+
+      setTimeout(() => {
         setSubmitting(false);
-      } else {
-        if (isLiabilityProduct) {
-          if (!selectedTenor) {
-            toast.error("Please Select a product tenor");
-            setSubmitting(false);
-            return;
-          }
-          // setTimeout(() => {
-          //   setSubmitting(false);
-          //   router.push({
-          //     pathname: "/confirm-investment",
-          //     params: {
-          //       header: header,
-          //       headerImageUrl: headerImageUrl && headerImageUrl,
-          //       amount: Number(amount),
-          //       portfolioId: product?.portfolioId,
-          //       portfolioTypeName: product?.portfolioTypeName,
-          //       isLiabilityProduct: true,
-          //       securityId: liabilityProducts[0].securityProductId,
-          //       tenor: selectedTenor,
-          //     },
-          //   });
-          // }, 2000);
-          router.push("/investment-simulator");
-        } else {
-          setTimeout(() => {
-            setSubmitting(false);
-            router.push({
-              pathname: "/confirm-investment",
-              params: {
-                header: header,
-                headerImageUrl: headerImageUrl && headerImageUrl,
-                amount: Number(amount),
-                portfolioId: product?.portfolioId,
-                portfolioTypeName: product?.portfolioTypeName,
-              },
-            });
-          }, 2000);
-        }
-      }
+        router.push({
+          pathname: isLiabilityProduct
+            ? "/investment-simulator"
+            : "/confirm-investment",
+          params: {
+            header,
+            headerImageUrl: headerImageUrl || undefined,
+            amount: Number(amount),
+            portfolioId: product?.portfolioId,
+            portfolioTypeName: product?.portfolioTypeName,
+            ...(product.portfolioType === 9 && {
+              isLiabilityProduct: true,
+              securityId: liabilityProducts[0].securityProductId,
+              tenor,
+            }),
+          },
+        });
+      }, 1000);
+    } catch (error) {
+      console.log(error);
+      setSubmitting(false);
+      toast.error("An error occurred. Please try again.");
     }
   };
 
   return (
     <LayeredScreen
       overlay={true}
-      headerImageUrl={headerImageUrl && headerImageUrl}
-      headerText={header && header}
+      headerImageUrl={headerImageUrl}
+      headerText={header}
     >
       {loading ? (
         <Loader />
@@ -278,9 +280,7 @@ const ProductDetails = ({}) => {
 
                       <SavingDetails
                         title={"Min. Investment"}
-                        detail={amountFormatter.format(
-                          product?.minimumInvestment
-                        )}
+                        detail={amountFormatter.format(getMinimumInvestment())}
                         icon={
                           <Moneys
                             variant="Bold"
@@ -336,10 +336,18 @@ const ProductDetails = ({}) => {
 
             <Formik
               validationSchema={validationSchema}
-              initialValues={{ amount: 0 }}
+              initialValues={{
+                amount: "",
+                tenor: isLiabilityProduct ? "" : undefined,
+              }}
               onSubmit={handleInvestment}
             >
-              {({ handleChange, handleSubmit, isSubmitting }) => (
+              {({
+                handleChange,
+                handleSubmit,
+                isSubmitting,
+                setFieldValue,
+              }) => (
                 <ContentBox customStyles={{ backgroundColor: Colors.white }}>
                   <StyledText
                     type="title"
@@ -352,7 +360,9 @@ const ProductDetails = ({}) => {
                   <AppTextField
                     label={"Amount to invest"}
                     name={"amount"}
-                    onChangeText={handleChange("amount")}
+                    onChangeText={(text) => {
+                      handleChange("amount")(text);
+                    }}
                     leftIcon={
                       <StyledText
                         type="subheading"
@@ -372,12 +382,16 @@ const ProductDetails = ({}) => {
                       placeholder={"Select Tenor"}
                       options={tenorOptions}
                       value={selectedTenor}
-                      onValueChange={(value) => setSelectedTenor(value)}
+                      onValueChange={(value) => {
+                        setSelectedTenor(value);
+                        setFieldValue("tenor", value);
+                      }}
                     />
                   )}
                   <AppButton
                     customStyles={{ marginTop: 20 }}
                     onPress={handleSubmit}
+                    disabled={isSubmitting}
                   >
                     {isSubmitting ? (
                       <ActivityIndicator
