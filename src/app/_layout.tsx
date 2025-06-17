@@ -12,7 +12,6 @@ import * as Updates from "expo-updates";
 
 import { Colors } from "../constants/Colors";
 import AuthProvider, { useAuth } from "@/context/authContext";
-import FlashMessage from "react-native-flash-message";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -80,7 +79,6 @@ export default function RootLayout() {
               style={{ backgroundColor: Colors.white }}
               toastOptions={{ titleStyle: { color: Colors.black } }}
             />
-            <FlashMessage />
           </SafeAreaProvider>
         </GestureHandlerRootView>
       </AuthProvider>

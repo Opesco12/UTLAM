@@ -127,6 +127,29 @@ const Register = () => {
     }
   };
 
+  const titleOptions = [
+    {
+      transId: 4,
+      value: "Chief",
+      label: "Chief",
+    },
+    {
+      transId: 1,
+      value: "Miss",
+      label: "Miss",
+    },
+    {
+      transId: 2,
+      value: "Mr",
+      label: "Mr",
+    },
+    {
+      transId: 3,
+      value: "Mrs",
+      label: "Mrs",
+    },
+  ];
+
   return (
     <Screen>
       <AppHeader />
@@ -215,6 +238,7 @@ const Register = () => {
             city: "",
             state: "",
             gender: "",
+            title: "",
             country: "",
             dob: "",
             nin: "",
@@ -295,6 +319,29 @@ const Register = () => {
                       {errors?.gender}
                     </StyledText>
                   )}
+
+                  <AppPicker
+                    label="Title"
+                    options={titleOptions}
+                    placeholder="Select Title"
+                    onValueChange={(value) => {
+                      setFieldValue("title", value);
+                      if (typeof setFieldTouched === "function")
+                        setFieldTouched("title", true);
+                    }}
+                    value={values.title}
+                  />
+                  {touched.title && errors?.title && (
+                    <StyledText
+                      type="label"
+                      color={Colors.error}
+                      variant="semibold"
+                      style={{ marginBottom: 10 }}
+                    >
+                      {errors?.title}
+                    </StyledText>
+                  )}
+
                   <Field
                     name="dob"
                     component={DatePicker}
