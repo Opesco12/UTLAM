@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
+import { View, StyleSheet, ActivityIndicator } from "react-native";
 import { Formik } from "formik";
 import * as Yup from "yup";
+import { router } from "expo-router";
+import { toast } from "sonner-native";
 
 import Screen from "@/src/components/Screen";
 import AppHeader from "@/src/components/AppHeader";
@@ -11,8 +13,6 @@ import AppButton from "@/src/components/AppButton";
 import { Colors } from "@/src/constants/Colors";
 
 import { resetPassword, resetPasswordRequest } from "@/src/api";
-import { router } from "expo-router";
-import { showMessage } from "react-native-flash-message";
 
 const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
@@ -93,21 +93,21 @@ const ResetPassword = () => {
           }}
           onSubmit={async (values) => {
             const { email, password, token } = values;
-            console.log("Got here");
             setLoading(true);
             if (isEmailRegistered === true) {
               const response = await resetPassword(token, password);
               if (response) {
-                showMessage({
-                  message: "Password Reset Succesful",
-                  type: "success",
-                });
+                toast.success("Password Reset Successful");
                 router.replace("/(auth)/login");
               }
             } else {
               const response = await resetPasswordRequest(email);
-              if (response) setIsEmailRegistered(true);
-              console.log(response);
+              if (response) {
+                setIsEmailRegistered(true);
+                toast.success(
+                  "We'll send a password reset email if the provided information matches our records"
+                );
+              }
             }
             setLoading(false);
           }}
@@ -119,7 +119,7 @@ const ResetPassword = () => {
                 onChangeText={handleChange("email")}
                 autoCapitalize={false}
                 label={"Email"}
-                readonly={isEmailRegistered && true}
+                editable={!isEmailRegistered && true}
               />
               {isEmailRegistered && (
                 <>

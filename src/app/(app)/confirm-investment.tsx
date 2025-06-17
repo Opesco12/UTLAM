@@ -1,6 +1,6 @@
 import { ActivityIndicator, StyleSheet, View, Switch } from "react-native";
 import { useState } from "react";
-import { showMessage } from "react-native-flash-message";
+import { toast } from "sonner-native";
 import LottieView from "lottie-react-native";
 import { router, useLocalSearchParams } from "expo-router";
 
@@ -17,7 +17,7 @@ import {
   mutualFundSubscription,
 } from "@/src/api";
 
-const ConfirmInvestment = ({ route }) => {
+const ConfirmInvestment = () => {
   const {
     amount,
     header,
@@ -29,8 +29,10 @@ const ConfirmInvestment = ({ route }) => {
   } = useLocalSearchParams();
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showAnimation, setShowAnimation] = useState(false);
 
   const makeInvestment = async ({ amount, portfolioId, portfolioTypeName }) => {
+    setLoading(true);
     if (portfolioTypeName === "mutualfund") {
       const data = await mutualFundSubscription({
         amount: amount,
@@ -59,6 +61,24 @@ const ConfirmInvestment = ({ route }) => {
       customStyles={{ paddingHorizontal: 0 }}
     >
       <View style={styles.container}>
+        {showAnimation && (
+          <View style={styles.animationContainer}>
+            <LottieView
+              autoPlay
+              source={require("../../../assets/animations/success.json")}
+              style={{
+                height: 200,
+                width: 200,
+                alignSelf: "center",
+              }}
+              loop={false}
+              onAnimationFinish={() => {
+                setShowAnimation(false);
+                router.replace("/(tabs)/");
+              }}
+            />
+          </View>
+        )}
         <ContentBox
           customStyles={{
             borderWidth: 0,
@@ -188,10 +208,9 @@ const ConfirmInvestment = ({ route }) => {
             </StyledText>
           </View>
           <AppButton
-            disabled={!agreeToTerms}
+            disabled={!agreeToTerms || loading}
             customStyles={{ marginTop: 20 }}
             onPress={async () => {
-              setLoading(true);
               try {
                 const data = await makeInvestment({
                   amount: amount,
@@ -199,42 +218,32 @@ const ConfirmInvestment = ({ route }) => {
                   portfolioTypeName: portfolioTypeName,
                 });
                 if (data) {
-                  setTimeout(() => {
-                    showMessage({
-                      position: "center",
-                      message: "Investment Successful",
-                      description: `You have successfully invested ₦${
-                        amount && amount
-                      } in ${header && header}`,
-                      style: {
-                        padding: 15,
-                      },
-                      textStyle: { fontSize: 18, textAlign: "center" },
-                      titleStyle: {
-                        fontSize: 20,
-                        fontWeight: "600",
-                        textAlign: "center",
-                      },
-                      duration: 3000,
-                      renderCustomContent: () => (
-                        <LottieView
-                          autoPlay
-                          source={require("../../../assets/animations/success.json")}
-                          style={{
-                            height: 200,
-                            width: 200,
-                            alignSelf: "center",
-                          }}
-                          loop={false}
-                        />
-                      ),
-                    });
-                    setLoading(false);
-                    router.replace("/(tabs)/");
-                  }, 2000);
+                  toast.success("Investment Successful", {
+                    description: `You have successfully invested ₦${
+                      amount && amount
+                    } in ${header && header}`,
+                    duration: 3000,
+                    style: {
+                      padding: 15,
+                      alignItems: "center",
+                    },
+                    richColors: true,
+                  });
+                  setShowAnimation(true);
                 }
               } catch (err) {
                 console.log(err);
+                toast.error("Investment Failed", {
+                  description:
+                    "An error occurred while processing your investment",
+                  duration: 3000,
+                  style: {
+                    padding: 15,
+                    alignItems: "center",
+                  },
+                  richColors: true,
+                });
+                setLoading(false);
               }
             }}
           >
@@ -251,6 +260,13 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.lightBg,
     flex: 1,
     paddingHorizontal: 15,
+  },
+  animationContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
   },
 });
 

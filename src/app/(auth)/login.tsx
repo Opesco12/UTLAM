@@ -2,6 +2,7 @@ import { ActivityIndicator, Image, View } from "react-native";
 import { useState } from "react";
 import { Formik } from "formik";
 import { router } from "expo-router";
+import { toast } from "sonner-native";
 
 import { Colors } from "@/src/constants/Colors";
 import AppButton from "@/src/components/AppButton";
@@ -57,15 +58,31 @@ const Login = () => {
             setSubmitting(true);
             const { email, password } = values;
             setEmail(email);
-            const response = await login(email, password);
-            if (response) {
-              setSubmitting(false);
-              resetForm();
-              router.push({
-                pathname: "/otp",
-                params: { username: email },
-              });
-            } else {
+            try {
+              const response = await login(email, password);
+              if (response) {
+                if (response?.message?.includes("Account is inactive")) {
+                  toast.error("Account is inactive. Please activate account");
+                  router.push({
+                    pathname: "/otp",
+                    params: {
+                      username: email,
+                      header: "Activate Account",
+                    },
+                  });
+                } else {
+                  router.push({
+                    pathname: "/otp",
+                    params: {
+                      username: email,
+                    },
+                  });
+                }
+                resetForm();
+              }
+            } catch (error) {
+              toast.error("Login failed. Please check your credentials");
+            } finally {
               setSubmitting(false);
             }
           }}

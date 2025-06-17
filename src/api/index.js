@@ -1,6 +1,5 @@
 import axios from "axios";
 import { endpoints } from "./endpoints";
-import keys from "../storage/keys";
 import {
   clearUserData,
   retrieveUserData,

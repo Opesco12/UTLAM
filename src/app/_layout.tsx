@@ -6,12 +6,13 @@ import { useEffect } from "react";
 import { Toaster } from "sonner-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { OneSignal, LogLevel } from "react-native-onesignal";
+// import { OneSignal, LogLevel } from "react-native-onesignal";
 import { PostHogProvider } from "posthog-react-native";
 import * as Updates from "expo-updates";
 
 import { Colors } from "../constants/Colors";
 import AuthProvider, { useAuth } from "@/context/authContext";
+import FlashMessage from "react-native-flash-message";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -55,8 +56,8 @@ export default function RootLayout() {
     checkForUpdates();
     // Enable verbose logging for debugging (remove in production)
     // OneSignal.Debug.setLogLevel(LogLevel.Verbose);
-    OneSignal.initialize("c75039b5-eb9a-4161-8758-6bdf5e05d99a");
-    OneSignal.Notifications.requestPermission(true);
+    // OneSignal.initialize("c75039b5-eb9a-4161-8758-6bdf5e05d99a");
+    // OneSignal.Notifications.requestPermission(true);
   }, []);
 
   if (!loaded) {
@@ -79,6 +80,7 @@ export default function RootLayout() {
               style={{ backgroundColor: Colors.white }}
               toastOptions={{ titleStyle: { color: Colors.black } }}
             />
+            <FlashMessage />
           </SafeAreaProvider>
         </GestureHandlerRootView>
       </AuthProvider>

@@ -1,6 +1,5 @@
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, ActivityIndicator } from "react-native";
 import { useState, useCallback } from "react";
-import { showMessage } from "react-native-flash-message";
 import { router, useLocalSearchParams } from "expo-router";
 import { toast } from "sonner-native";
 
@@ -10,17 +9,19 @@ import AppButton from "@/src/components/AppButton";
 import OtpInput from "@/src/components/Otp_Input";
 import StyledText from "@/src/components/StyledText";
 import { Colors } from "@/src/constants/Colors";
-import { activateAccount, login2fa, resendActivationCode } from "@/src/api";
-import { storeUserData } from "@/src/storage/userData";
 import { obfuscateEmail } from "@/src/helperFunctions/obfuscateEmail";
+
 import { useAuth } from "@/context/authContext";
+
+import { activateAccount, login2fa, resnedActivationCode } from "@/src/api";
 
 const OTP_LENGTH = 6;
 
 const Otp = () => {
-  const { username, header } = useLocalSearchParams<{
+  const { username, header, from } = useLocalSearchParams<{
     username: string;
     header?: string;
+    from?: string;
   }>();
   const [code, setCode] = useState<string[]>(Array(OTP_LENGTH).fill(""));
   const [isIncorrect, setIsIncorrect] = useState(false);
@@ -28,54 +29,52 @@ const Otp = () => {
   const { setIsAuthenticated } = useAuth();
 
   const shortenedEmail = username ? obfuscateEmail(username) : "";
+  const isActivation = !!header;
 
   const handleResendCode = useCallback(async () => {
     if (!username) return;
+    setIsLoading(true);
     try {
-      const response = await resendActivationCode({ userName: username });
+      const response = await resnedActivationCode({ userName: username });
       if (response) {
-        showMessage({
-          message: "Security code has been sent to your email",
-          type: "success",
-        });
+        toast.success("Security code has been sent to your email");
       }
     } catch (error) {
-      showMessage({
-        message: "Failed to resend security code",
-        type: "danger",
-      });
+      toast.error("Failed to resend activation code");
+    } finally {
+      setIsLoading(false);
     }
   }, [username]);
 
   const handleSubmit = useCallback(async () => {
     if (code.join("").length < OTP_LENGTH) return;
-
+    setIsLoading(true);
     setIsIncorrect(false);
     const securityCode = code.join("");
     const data = { username, securityCode };
 
     try {
-      let response;
-      if (header) {
-        response = await activateAccount(data);
+      if (isActivation) {
+        const response = await activateAccount(data);
         if (response) {
-          toast.success("Account activated successfully");
+          toast.success("Your account has been successfully activated");
           router.replace("/login");
         }
       } else {
-        response = await login2fa(data);
-        console.log(response);
+        const response = await login2fa(data);
         if (response) {
           toast.success("Login Successful");
-          router.replace("/(tabs)/");
           setIsAuthenticated(true);
+          router.replace("/(tabs)/");
         }
       }
     } catch (error) {
       setIsIncorrect(true);
       toast.error("Invalid Security Code");
+    } finally {
+      setIsLoading(false);
     }
-  }, [code, username, header, setIsAuthenticated]);
+  }, [code, username, isActivation, setIsAuthenticated, from]);
 
   return (
     <Screen>
@@ -102,7 +101,7 @@ const Otp = () => {
           isIncorrect={isIncorrect}
         />
 
-        {header && (
+        {isActivation && (
           <View style={styles.resendContainer}>
             <StyledText
               type="body"
@@ -125,10 +124,17 @@ const Otp = () => {
 
         <AppButton
           onPress={handleSubmit}
-          disabled={code.join("").length < OTP_LENGTH}
+          disabled={isLoading || code.join("").length < OTP_LENGTH}
           customStyles={styles.button}
         >
-          Continue
+          {isLoading ? (
+            <ActivityIndicator
+              size={"small"}
+              color={Colors.white}
+            />
+          ) : (
+            "Continue"
+          )}
         </AppButton>
       </View>
     </Screen>
