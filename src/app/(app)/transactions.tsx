@@ -15,6 +15,7 @@ import { getPendingWithdrawals, getTransactions } from "@/src/api";
 
 const Transactions = () => {
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [transactions, setTransactions] = useState([]);
   const [pendingWithdrawals, setPendingWithdrawals] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -246,9 +247,18 @@ const Transactions = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  };
   return (
     <>
-      <Screen>
+      <Screen
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
+      >
         <AppHeader />
         <StyledText
           type="heading"

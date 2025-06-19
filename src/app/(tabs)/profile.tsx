@@ -14,6 +14,7 @@ import {
   Key,
 } from "iconsax-react-native";
 import { Pressable } from "react-native";
+import { toast } from "sonner-native";
 
 import Screen from "@/src/components/Screen";
 import AppHeader from "@/src/components/AppHeader";
@@ -23,8 +24,7 @@ import AppListItem from "@/src/components/AppListItem";
 import ProfileImageUploadModal from "@/src/components/ImageUploadModal";
 
 import { retrieveUserData } from "@/src/storage/userData";
-import { logout, fetchClientPhoto } from "@/src/api";
-import { toast } from "sonner-native";
+import { logout, fetchClientPhoto, uploadImage } from "@/src/api";
 
 const Profile = () => {
   const [fullname, setFullname] = useState(null);
@@ -32,6 +32,7 @@ const Profile = () => {
   const [profileImage, setProfileImage] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const logoutUser = async () => {
     const data = await logout(authToken);
@@ -56,20 +57,29 @@ const Profile = () => {
     }
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const userData = await retrieveUserData();
-      setFullname(userData?.fullName);
-      setAuthToken(userData?.token);
+  const fetchData = async () => {
+    const userData = await retrieveUserData();
+    setFullname(userData?.fullName);
+    setAuthToken(userData?.token);
 
-      const profileImage = await fetchClientPhoto();
-      setProfileImage(profileImage?.photo);
-    };
+    const profileImage = await fetchClientPhoto();
+    setProfileImage(profileImage?.photo);
+  };
+  useEffect(() => {
     fetchData();
   }, []);
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  };
+
   return (
-    <Screen>
+    <Screen
+      refreshing={refreshing}
+      onRefresh={handleRefresh}
+    >
       <AppHeader />
       <View
         style={{

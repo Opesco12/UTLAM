@@ -118,64 +118,7 @@ const ConfirmInvestment = () => {
                 {amount && amountFormatter.format(amount)}
               </StyledText>
             </View>
-            <AppDivider />
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <StyledText
-                color={Colors.light}
-                type="body"
-                variant="regular"
-              >
-                Management Fee(2%)
-              </StyledText>
-              <StyledText
-                color={Colors.primary}
-                type="subheading"
-                variant="semibold"
-              >
-                {amountFormatter.format(0)}
-              </StyledText>
-            </View>
-
-            <AppDivider />
-
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <StyledText
-                color={Colors.light}
-                type="body"
-                variant="regular"
-              >
-                Total Due
-              </StyledText>
-              <StyledText
-                color={Colors.primary}
-                type="subheading"
-                variant="semibold"
-              >
-                {amount && amountFormatter.format(Number(amount) + 0)}
-              </StyledText>
-            </View>
           </ContentBox>
-
-          <StyledText
-            color={Colors.light}
-            type="body"
-            variant="medium"
-          >
-            Redemptions during the Lock-up Period will attract a 20% penalty on
-            accrued returns eaned over the period.
-          </StyledText>
 
           <StyledText
             color={Colors.light}

@@ -57,19 +57,7 @@ const ProductDetails = ({}) => {
   const validationSchema = Yup.object().shape({
     amount: Yup.number()
       .required("Amount is required")
-      .moreThan(0, "Please input a valid amount")
-      .max(
-        userBalance?.amount || 0,
-        `Amount cannot exceed wallet balance (${amountFormatter.format(
-          userBalance?.amount || 0
-        )})`
-      )
-      .min(
-        getMinimumInvestment(),
-        `Minimum investment is ${amountFormatter.format(
-          getMinimumInvestment()
-        )}`
-      ),
+      .moreThan(0, "Please input a valid amount"),
     ...(isLiabilityProduct && {
       tenor: Yup.string().required("Please select a product tenor"),
     }),

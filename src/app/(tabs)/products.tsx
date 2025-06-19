@@ -16,12 +16,13 @@ import Loader from "@/src/components/Loader";
 const Products = () => {
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState("all");
 
   const toggleOptions = [
     { label: "All", value: "all" },
     { label: "Mutual Funds", value: "mutualfund" },
-    { label: "Liabilities", value: "liability" },
+    { label: "Fixed Income", value: "liability" },
   ];
 
   const getNumberOfProducts = () => {
@@ -49,8 +50,19 @@ const Products = () => {
     fetchData();
   }, []);
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    const data = await getProducts();
+    setProducts(data);
+    setRefreshing(false);
+  };
+
   return (
-    <LayeredScreen headerText={"Investment Products"}>
+    <LayeredScreen
+      headerText={"Investment Products"}
+      refreshing={refreshing}
+      onRefresh={handleRefresh}
+    >
       {loading ? (
         <Loader />
       ) : (

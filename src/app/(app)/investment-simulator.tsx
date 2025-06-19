@@ -22,7 +22,8 @@ const Simulator = () => {
   const [selectedTenor, setSelectedTenor] = useState(null);
   const [liabilityProducts, setLiabilityProducts] = useState(null);
   const [productTenors, setProductTenors] = useState([]);
-  const [searchParams, setSearchParams] = useState({});
+
+  const params = useLocalSearchParams();
 
   function convertToKebabCase(inputString) {
     inputString = inputString.trim();
@@ -75,7 +76,6 @@ const Simulator = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      console.log("Trying to fetch");
       const products = await getProducts();
       const filtered = products
         .filter((product) => product.portfolioType === 9)
@@ -85,11 +85,6 @@ const Simulator = () => {
           portfolioTypeName: product.portfolioTypeName,
         }));
       setProducts(filtered);
-
-      const params = useLocalSearchParams();
-      setSearchParams(params);
-
-      console.log("Search Params:", params);
     };
 
     fetchData();
@@ -131,6 +126,15 @@ const Simulator = () => {
     }
   }, [selectedProductId, selectedTenor]);
 
+  useEffect(() => {
+    if (params) {
+      setSelectedProductId(params?.portfolioId || "");
+      setSelectedTenor(params?.tenor || "");
+      const product = getSelectedProduct();
+      setSelectedProduct(product);
+    }
+  }, [params]);
+
   const processInvestment = async (values) => {
     const { principal, product, tenor } = values;
     setTimeout(() => {
@@ -158,9 +162,9 @@ const Simulator = () => {
       <View style={styles.container}>
         <Formik
           initialValues={{
-            principal: searchParams?.amount || "",
-            product: searchParams?.portfolioId || "",
-            tenor: searchParams?.tenor || "",
+            principal: params?.amount || "",
+            product: Number(params?.portfolioId) || "",
+            tenor: Number(params?.tenor) || "",
           }}
           enableReinitialize={true}
           onSubmit={processInvestment}

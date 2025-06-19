@@ -233,8 +233,6 @@ const Index = () => {
         );
       }
     } catch (err) {
-      // toast.error("Failed to load data");
-      // console.error(err);
     } finally {
       setIsLoading(false);
     }
@@ -262,8 +260,17 @@ const Index = () => {
     setTotalPortfolioBalance(total);
   }, [fixedIncomePortfolio, mutualFundBalances, userBalance]);
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  };
+
   return (
-    <LayeredScreen>
+    <LayeredScreen
+      refreshing={refreshing}
+      onRefresh={handleRefresh}
+    >
       <View style={{ paddingHorizontal: 20, flex: 1, flexGrow: 1 }}>
         <View
           style={{

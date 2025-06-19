@@ -8,6 +8,7 @@ import {
   StyleSheet,
   ImageBackground,
   KeyboardAvoidingView,
+  RefreshControl,
 } from "react-native";
 
 import { useNavigation } from "@react-navigation/native";
@@ -42,6 +43,8 @@ const LayeredScreen = ({
                 backgroundColor: Colors.lightBg,
               },
             ]}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
             {...props}
           >
             <ImageBackground
@@ -109,6 +112,12 @@ const LayeredScreen = ({
               style={{ flex: 1 }}
               contentContainerStyle={{ flexGrow: 1 }}
               showsVerticalScrollIndicator={false}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                />
+              }
             >
               <ImageBackground
                 source={
@@ -167,8 +176,6 @@ const LayeredScreen = ({
 const styles = StyleSheet.create({
   backButton: {
     left: 20,
-    // top: 0,
-    // position: 'absolute'
   },
   imageBg: {
     backgroundColor: Colors.primary,
@@ -176,7 +183,6 @@ const styles = StyleSheet.create({
     height: 200,
     justifyContent: "flex-end",
     paddingBottom: 10,
-    // marginBottom: 15,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,

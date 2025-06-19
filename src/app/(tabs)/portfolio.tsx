@@ -20,7 +20,6 @@ import {
 
 const Portfolio = () => {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [totalBalance, setTotalBalance] = useState(0);
   const [userBalance, setUserBalance] = useState({
     currencyCode: "",
@@ -28,11 +27,11 @@ const Portfolio = () => {
   });
   const [mutualFundBalances, setMutualFundBalances] = useState([]);
   const [fixedIncomePortfolio, setFixedIncomePortfolio] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      setError(null);
 
       const [walletBalance, mutualFundData, investibleProducts] =
         await Promise.all([
@@ -103,22 +102,18 @@ const Portfolio = () => {
     setTotalBalance(total);
   }, [fixedIncomePortfolio, mutualFundBalances, userBalance]);
 
-  // if (error) {
-  //   return (
-  //     <LayeredScreen headerText="My Portfolio">
-  //       <StyledText
-  //         type="title"
-  //         variant="regular"
-  //         color={Colors.error}
-  //       >
-  //         {error}
-  //       </StyledText>
-  //     </LayeredScreen>
-  //   );
-  // }
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  };
 
   return (
-    <LayeredScreen headerText="My Portfolio">
+    <LayeredScreen
+      headerText="My Portfolio"
+      refreshing={refreshing}
+      onRefresh={handleRefresh}
+    >
       {loading ? (
         <Loader />
       ) : (

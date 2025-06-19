@@ -60,16 +60,19 @@ const Screen = ({
         <>
           <View style={[styles.container, customStyles]}>
             <SafeAreaView style={{ flex: 1 }}>
-              <KeyboardAvoidingWrapper>
-                <ScrollView
-                  style={{ flex: 1 }}
-                  contentContainerStyle={[{ flexGrow: 1 }]}
-                  showsVerticalScrollIndicator={false}
-                  {...refreshProps}
-                >
-                  {children}
-                </ScrollView>
-              </KeyboardAvoidingWrapper>
+              <ScrollView
+                style={{ flex: 1 }}
+                contentContainerStyle={[{ flexGrow: 1 }]}
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
+                  />
+                }
+              >
+                <KeyboardAvoidingWrapper>{children}</KeyboardAvoidingWrapper>
+              </ScrollView>
             </SafeAreaView>
           </View>
         </>
