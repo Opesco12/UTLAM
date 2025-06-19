@@ -151,13 +151,11 @@ const PinManagement = () => {
     }
 
     const requestData = {
-      accountNo: walletBalance?.walletAccountNo,
       oldPassword: Number(oldPinString),
       newPassword: Number(newPinString),
     };
 
     try {
-      console.log("request data: ", requestData);
       const response = await changeTransactionPin(requestData);
       if (response?.status === true) {
         toast.success("Successfully changed transaction PIN");
