@@ -70,6 +70,7 @@ const Login = () => {
                       header: "Activate Account",
                     },
                   });
+                  return;
                 } else {
                   router.push({
                     pathname: "/otp",

@@ -220,7 +220,7 @@ const Profile = () => {
                 />
               }
             >
-              Pin Management
+              PIN Management
             </AppListItem>
           </Link>
           <Link

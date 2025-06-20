@@ -41,10 +41,6 @@ const PersonalDetails = () => {
   const [nexOfKin, setNextOfKin] = useState(null);
   const [kinRelationship, setKinRelationship] = useState(null);
   const [gender, setGender] = useState(null);
-  const [extraPersonalDetails, setExtraPersonalDetails] = useState({
-    maritalStatus: null,
-    titleCode: null,
-  });
   const [index, setIndex] = useState(0);
   const [routes] = useState([
     { key: "personal", title: "Personal Details" },
@@ -73,6 +69,7 @@ const PersonalDetails = () => {
         clientType,
         clientGroupId,
         gender,
+        nin,
       } = clientInfo;
       setUserData({
         firstname: firstname,
@@ -90,14 +87,7 @@ const PersonalDetails = () => {
         mothersMaidenName: mothersMaidenName,
         clientType: clientType,
         clientGroupId: clientGroupId,
-      });
-
-      setExtraPersonalDetails((prev) => {
-        return {
-          ...prev,
-          maritalStatus: clientInfo?.maritalStatus,
-          titleCode: clientInfo?.titleCode,
-        };
+        nin: nin,
       });
 
       const nextOfKins = await getNextOfKins();
@@ -182,6 +172,9 @@ const PersonalDetails = () => {
           occupation: userData?.occupation || "",
           religion: userData?.religion || "",
           mothersMaidenName: userData?.mothersMaidenName || "",
+          maritalStatus: userData?.maritalStatus || "",
+          titleCode: userData?.titleCode || "",
+          nin: userData?.nin || "",
         }}
         onSubmit={async (values) => {
           try {
@@ -195,12 +188,13 @@ const PersonalDetails = () => {
               address1: userData?.address1,
               mobileNumber: values?.phoneNumber,
               gender: userData?.gender,
-              titleCode: extraPersonalDetails?.titleCode,
-              maritalStatus: extraPersonalDetails?.maritalStatus,
+              titleCode: values?.titleCode,
+              maritalStatus: values?.maritalStatus,
               occupation: values?.occupation,
               religion: values?.religion,
               mothersMaidenName: values?.mothersMaidenName,
               placeOfBirth: values?.placeOfBirth,
+              nin: values?.nin,
             });
             if (data) {
               toast.success("Personal Information Updated Successfully");
@@ -210,7 +204,13 @@ const PersonalDetails = () => {
           }
         }}
       >
-        {({ handleChange, handleSubmit, isSubmitting, values }) => (
+        {({
+          handleChange,
+          handleSubmit,
+          isSubmitting,
+          values,
+          setFieldValue,
+        }) => (
           <View>
             <View
               style={{
@@ -240,20 +240,22 @@ const PersonalDetails = () => {
               readonly
             />
 
+            <AppTextField
+              name={"nin"}
+              onChangeText={handleChange("nin")}
+              label={"NIN (National Identification Number)"}
+              secureTextEntry={true}
+              readonly
+            />
+
             <AppPicker
               label={"Marital Status"}
               placeholder={"Select Marital Status"}
               rightLabelColor={Colors.light}
               options={maritalStatusOptions}
-              onValueChange={(value) =>
-                setExtraPersonalDetails((prev) => {
-                  return { ...prev, maritalStatus: value };
-                })
-              }
-              value={extraPersonalDetails.maritalStatus}
-              clickable={
-                extraPersonalDetails.maritalStatus === null ? true : false
-              }
+              onValueChange={(value) => setFieldValue("maritalStatus", value)}
+              value={values.maritalStatus}
+              clickable={values.maritalStatus === "" || !values.maritalStatus}
             />
 
             <AppPicker
@@ -261,13 +263,9 @@ const PersonalDetails = () => {
               placeholder={"Select Title"}
               rightLabelColor={Colors.light}
               options={titleOptions}
-              onValueChange={(value) =>
-                setExtraPersonalDetails((prev) => {
-                  return { ...prev, titleCode: value };
-                })
-              }
-              value={extraPersonalDetails.titleCode}
-              clickable={extraPersonalDetails.titleCode === null ? true : false}
+              onValueChange={(value) => setFieldValue("titleCode", value)}
+              value={values.titleCode}
+              clickable={values.titleCode === "" || !values.titleCode}
             />
 
             <AppTextField

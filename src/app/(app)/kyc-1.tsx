@@ -98,7 +98,7 @@ const KYC_1 = () => {
     try {
       const data = await updateClientInfo({
         ...(clientInfo || {}),
-        nin: values?.nin,
+        // nin: values?.nin,
         bvn: values?.bvn,
       });
       if (data) {
@@ -282,7 +282,7 @@ const KYC_1 = () => {
             name="nin"
             onChangeText={handleChange("nin")}
             secureTextEntry
-            disabled={data?.nin ? true : false}
+            disabled={true}
           />
           <AppTextField
             label={"Biometric Verification Number"}
@@ -293,7 +293,7 @@ const KYC_1 = () => {
           />
           <AppButton
             customStyles={{ marginTop: 30, marginBottom: 20 }}
-            disabled={data?.bvn === null || data?.nin === null ? false : true}
+            disabled={data?.bvn === null ? false : true}
             onPress={handleSubmit}
           >
             Save
